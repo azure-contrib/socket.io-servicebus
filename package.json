@@ -1,0 +1,33 @@
+{
+  "name": "socket.io-servicebus",
+  "author": "Microsoft Corporation",
+  "contributors": ["Block, Glenn <gblock@microsoft.com>", "Tavares, Chris <ctavares@microsoft.com>"],
+  "version": "0.0.1",
+  "description": "Socket.io store that connects to Windows Azure Service Bus",
+  "tags" : ["azure", "socket.io"],
+  "keywords": [ "node", "azure", "socket.io" ],
+  "main": "./lib/index.js",
+  "engines": { "node": ">= 0.6.15" },
+  "licenses": [ { "type": "Apache", "url": "http://www.apache.org/licenses/LICENSE-2.0" } ],
+  "dependencies": {
+    "azure" : ">= 0.6.9",
+    "socket.io" : ">= 0.9.13"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "jshint": "*",
+    "sinon": "*",
+    "should": "*"
+  },
+  "homepage": "http://github.com/christav/socket.io-servicebus",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:christav/socket.io-servicebus.git"
+  },
+  "bugs" : {
+    "url" : "http://github.com/christav/socket.io-servicebus/issues"
+  },
+  "scripts": {
+    "test": "node test/runtests.js testlist.txt"
+  }
+}
