@@ -23,7 +23,7 @@ describe("Service Bus Store client objects", function() {
   var client;
   var clientId = 'a client';
 
-  before(function() {
+  beforeEach(function() {
     store = new SbStore();
     client = new SbStore.Client(store, clientId);
   });
@@ -51,6 +51,26 @@ describe("Service Bus Store client objects", function() {
     client.set(key, originalValue, function (err) {
       client.get(key, function (err, value) {
         value.should.equal(originalValue);
+        done(err);
+      });
+    });
+  });
+
+  it('should return false if key does not exist', function (done) {
+    client.has('no such key', function (err, keyExists) {
+      keyExists.should.be.false;
+      done(err);
+    });
+  });
+
+  it('should return true if key does exist', function (done) {
+    var key = 'some key';
+    var originalValue = 'some value';
+
+    client.set(key, originalValue, function (err) {
+      if (err) { return done(err); }
+      client.has(key, function (err, hasKey) {
+        hasKey.should.be.true;
         done(err);
       });
     });
