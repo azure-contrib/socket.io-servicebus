@@ -13,20 +13,27 @@
 * limitations under the License.
 */
 
+var should = require('should');
+
 var io = require('socket.io')
-  , util = require('util');
+  , SbStore = require('../lib/sbstore.js');
 
-exports = module.exports = ServiceBusStore;
+describe("Service Bus Store client objects", function() {
+  var store;
+  var client;
+  var clientId = 'a client';
 
-function ServiceBusStore() {
+  before(function() {
+    store = new SbStore();
+    client = new SbStore.Client(store, clientId);
+  });
 
-}
+  it('should inherit from socket.io.Store.Client', function() {
+    client.should.be.an.instanceof(io.Store.Client);
+  });
 
-util.inherits(ServiceBusStore, io.Store);
-
-ServiceBusStore.Client = function() {
-  io.Store.Client.apply(this, arguments);
-}
-
-util.inherits(ServiceBusStore.Client, io.Store.Client);
-
+  it('should initialize base class fields', function(){
+    client.store.should.equal(store);
+    client.id.should.equal("a client");
+  });
+});

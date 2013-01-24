@@ -18,29 +18,9 @@ var should = require('should');
 var io = require('socket.io')
   , SbStore = require('../lib/sbstore.js');
 
-describe("Service Bus Store", function() {
+describe("Service Bus Store objects", function() {
   it("should be createable", function() {
     var store = new SbStore();
     should.exist(store);
-  });
-
-  describe("clients", function() {
-    var store;
-    var client;
-    var clientId = 'a client';
-
-    before(function() {
-      store = new SbStore();
-      client = new SbStore.Client(store, clientId);
-    });
-
-    it('should inherit from socket.io.Store.Client', function() {
-      client.should.be.an.instanceof(io.Store.Client);
-    });
-
-    it('should initialize base class fields', function(){
-      client.store.should.equal(store);
-      client.id.should.equal("a client");
-    });
   });
 });
