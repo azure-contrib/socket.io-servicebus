@@ -36,4 +36,11 @@ describe("Service Bus Store client objects", function() {
     client.store.should.equal(store);
     client.id.should.equal("a client");
   });
+
+  it('should not return property that has not been set', function (done) {
+    client.get('no such key', function (err, value) {
+      should.equal(value, null);
+      done();
+    });
+  });
 });
