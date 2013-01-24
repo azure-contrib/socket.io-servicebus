@@ -19,8 +19,19 @@ var io = require('socket.io')
   , SbStore = require('../lib/sbstore.js');
 
 describe("Service Bus Store objects", function() {
+  
   it("should be createable", function() {
     var store = new SbStore();
     should.exist(store);
   });
+
+  describe('when publishing', function () {
+
+    it('should package message to publish');
+
+    it('should send message to servicebus topic');
+
+    it('should emit local publish event');
+  });
+  
 });
