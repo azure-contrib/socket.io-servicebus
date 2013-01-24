@@ -28,6 +28,6 @@
     "url" : "http://github.com/christav/socket.io-servicebus/issues"
   },
   "scripts": {
-    "test": "node test/runtests.js testlist.txt"
+    "test": "mocha"
   }
 }
