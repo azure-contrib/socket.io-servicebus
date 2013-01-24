@@ -6,7 +6,7 @@
   "description": "Socket.io store that connects to Windows Azure Service Bus",
   "tags" : ["azure", "socket.io"],
   "keywords": [ "node", "azure", "socket.io" ],
-  "main": "./lib/index.js",
+  "main": "./lib/sbstore.js",
   "engines": { "node": ">= 0.6.15" },
   "licenses": [ { "type": "Apache", "url": "http://www.apache.org/licenses/LICENSE-2.0" } ],
   "dependencies": {
@@ -28,6 +28,6 @@
     "url" : "http://github.com/christav/socket.io-servicebus/issues"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha -R spec"
   }
 }
