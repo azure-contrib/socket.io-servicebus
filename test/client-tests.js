@@ -37,45 +37,47 @@ describe("Service Bus Store client objects", function() {
     client.id.should.equal("a client");
   });
 
-  it('should not return property that has not been set', function (done) {
-    client.get('no such key', function (err, value) {
-      should.equal(value, null);
-      done();
+  describe('get and set', function () {
+    it('should not return property that has not been set', function (done) {
+      client.get('no such key', function (err, value) {
+        should.equal(value, null);
+        done();
+      });
     });
-  });
 
-  it('should return value for key that has been set', function (done) {
-    var key = 'a key';
-    var originalValue = 'a stored value';
+    it('should return value for key that has been set', function (done) {
+      var key = 'a key';
+      var originalValue = 'a stored value';
 
-    client.set(key, originalValue, function (err) {
-      client.get(key, function (err, value) {
-        value.should.equal(originalValue);
-        done(err);
+      client.set(key, originalValue, function (err) {
+        client.get(key, function (err, value) {
+          value.should.equal(originalValue);
+          done(err);
+        });
       });
     });
   });
-
-  it('should return false if key does not exist', function (done) {
-    client.has('no such key', function (err, keyExists) {
-      keyExists.should.be.false;
-      done(err);
-    });
-  });
-
-  it('should return true if key does exist', function (done) {
-    var key = 'some key';
-    var originalValue = 'some value';
-
-    client.set(key, originalValue, function (err) {
-      if (err) { return done(err); }
-      client.has(key, function (err, hasKey) {
-        hasKey.should.be.true;
+  describe('has', function () {
+    it('should return false if key does not exist', function (done) {
+      client.has('no such key', function (err, keyExists) {
+        keyExists.should.be.false;
         done(err);
       });
     });
-  });
 
+    it('should return true if key does exist', function (done) {
+      var key = 'some key';
+      var originalValue = 'some value';
+
+      client.set(key, originalValue, function (err) {
+        if (err) { return done(err); }
+        client.has(key, function (err, hasKey) {
+          hasKey.should.be.true;
+          done(err);
+        });
+      });
+    });
+  });
   it('should delete keys', function (done) {
     var key = 'some key';
     var value ='some value';
@@ -89,6 +91,42 @@ describe("Service Bus Store client objects", function() {
           hasKey.should.be.false;
           done();
         });
+      });
+    });
+  });
+
+  describe('destroy', function () {
+    var key = 'some key';
+    var value = 'some value';
+
+    beforeEach(function (done) {
+      client.set(key, value, function () {
+        done();
+      });
+    });
+
+    it('should clean up data immediately if no expiration', function (done) {
+      client.destroy();
+      client.has(key, function (err, hasKey) {
+        if (err) { return done(err); }
+        hasKey.should.be.false;
+        done();
+      });
+    });
+
+    it('should clean up after expiration', function (done) {
+      client.destroy(1);
+      client.has(key, function (err, hasKey) {
+        if (err) { return done(err); }
+        hasKey.should.be.true;
+
+        setTimeout(function() {
+          client.has(key, function (err, hasKey) {
+            if (err) { return done(err); }
+            hasKey.should.be.false;
+            done();
+          });
+        }, 1000);
       });
     });
   });
