@@ -43,4 +43,16 @@ describe("Service Bus Store client objects", function() {
       done();
     });
   });
+
+  it('should return value for key that has been set', function (done) {
+    var key = 'a key';
+    var originalValue = 'a stored value';
+
+    client.set(key, originalValue, function (err) {
+      client.get(key, function (err, value) {
+        value.should.equal(originalValue);
+        done(err);
+      });
+    });
+  });
 });
