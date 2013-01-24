@@ -13,7 +13,8 @@
 * limitations under the License.
 */
 
-var should = require('should');
+var should = require('should')
+  , sinon = require('sinon');
 
 var io = require('socket.io')
   , SbStore = require('../lib/sbstore.js');
@@ -98,6 +99,15 @@ describe("Service Bus Store client objects", function() {
   describe('destroy', function () {
     var key = 'some key';
     var value = 'some value';
+    var clock;
+
+    before(function () {
+      clock = sinon.useFakeTimers();
+    });
+
+    after(function(){
+      clock.restore();
+    });
 
     beforeEach(function (done) {
       client.set(key, value, function () {
@@ -120,13 +130,13 @@ describe("Service Bus Store client objects", function() {
         if (err) { return done(err); }
         hasKey.should.be.true;
 
-        setTimeout(function() {
-          client.has(key, function (err, hasKey) {
-            if (err) { return done(err); }
-            hasKey.should.be.false;
-            done();
-          });
-        }, 1000);
+        clock.tick(1000);
+
+        client.has(key, function (err, hasKey) {
+          if (err) { return done(err); }
+          hasKey.should.be.false;
+          done();
+        });
       });
     });
   });
