@@ -13,7 +13,8 @@
 * limitations under the License.
 */
 
-var should = require('should');
+var should = require('should')
+  , sinon = require('sinon');
 
 var io = require('socket.io')
   , SbStore = require('../lib/sbstore.js');
@@ -27,11 +28,48 @@ describe("Service Bus Store objects", function() {
 
   describe('when publishing', function () {
 
-    it('should package message to publish');
+    var formatter = {
+      pack: sinon.stub().returns('{type: "message", args: []}'),
+      unpack: sinon.stub().returns({type: "message", args: []})
+    };
 
-    it('should send message to servicebus topic');
+    var serviceBusMock = {
+      send: sinon.stub()
+    };
 
-    it('should emit local publish event');
+    var store;
+    var eventsEmitted = [];
+
+    before(function () {
+      store = new SbStore({
+        serviceBusInterface: serviceBusMock,
+        messageFormatter: formatter,
+        });
+
+      store.on('publish', function (name) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        eventsEmitted.push({event: 'publish', name: name, args: args });
+        });
+      store.publish('message', 1, 2, 3);
+    });
+
+    it('should package message to publish', function () {
+      formatter.pack.calledOnce.should.be.true;
+    });
+
+    it('should send message to servicebus topic', function () {
+      serviceBusMock.send.calledOnce.should.be.true;
+    });
+
+    it('should emit local publish event', function () {
+      eventsEmitted.should.have.length(1);
+      eventsEmitted[0].event.should.equal('publish');
+      eventsEmitted[0].name.should.equal('message');
+      var args = eventsEmitted[0].args;
+      args.should.have.length(3);
+      args[0].should.equal(1);
+      args[1].should.equal(2);
+      args[2].should.equal(3);
+    });
   });
-  
 });
