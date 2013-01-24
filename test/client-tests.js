@@ -75,4 +75,21 @@ describe("Service Bus Store client objects", function() {
       });
     });
   });
+
+  it('should delete keys', function (done) {
+    var key = 'some key';
+    var value ='some value';
+
+    client.set(key, value, function (err) {
+      if (err) { return done(err); }
+      client.del(key, function (err) {
+        if (err) { done(err); }
+        client.has(key, function (err, hasKey) {
+          if (err) { done(err); }
+          hasKey.should.be.false;
+          done();
+        });
+      });
+    });
+  });
 });
