@@ -6,13 +6,21 @@ var express = require('express')
   , http = require('http')
   , stylus = require('stylus')
   , nib = require('nib')
-  , sio = require('../../node_modules/socket.io');
+  , sio = require('../../node_modules/socket.io')
+  , azure = require('../../node_modules/azure')
+  , SbStore = require('../../lib/sbstore');
 
 /**
  * App.
  */
 
 var app = express();
+
+// Pick up port, topic, & subscription names from command line / environment
+
+var topic = process.argv[2] || process.environment['SB_CHAT_TOPIC'] || 'chat';
+var subscription = process.argv[3] || process.environment['SB_CHAT_SUBSCRIPTION'] || 'chatA';
+var port = process.argv[4] || process.environment['SB_CHAT_PORT'] || 3000;
 
 /**
  * App configuration.
@@ -44,7 +52,7 @@ app.get('/', function (req, res) {
 
 var server = http.createServer(app);
 
-server.listen(3000, function () {
+server.listen(port, function () {
   var addr = server.address();
   console.log('   app listening on http://' + addr.address + ':' + addr.port);
 });
@@ -55,6 +63,18 @@ server.listen(3000, function () {
 
 var io = sio.listen(server)
   , nicknames = {};
+
+/**
+ * Set up socket.io to use service bus store
+ */
+
+io.configure(function () {
+  io.set('store', new SbStore({
+    topic: topic,
+    subscription: subscription,
+    serviceBusService: azure.createServiceBusService()
+  }));
+});
 
 io.sockets.on('connection', function (socket) {
   socket.on('user message', function (msg) {
