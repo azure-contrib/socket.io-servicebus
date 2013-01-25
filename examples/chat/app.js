@@ -74,6 +74,8 @@ io.configure(function () {
     subscription: subscription,
     serviceBusService: azure.createServiceBusService()
   }));
+
+  io.set('transports', ['xhr-polling']);
 });
 
 io.sockets.on('connection', function (socket) {
