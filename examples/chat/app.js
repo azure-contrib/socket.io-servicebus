@@ -18,9 +18,9 @@ var app = express();
 
 // Pick up port, topic, & subscription names from command line / environment
 
-var topic = process.argv[2] || process.environment['SB_CHAT_TOPIC'] || 'chat';
-var subscription = process.argv[3] || process.environment['SB_CHAT_SUBSCRIPTION'] || 'chatA';
-var port = process.argv[4] || process.environment['SB_CHAT_PORT'] || 3000;
+var topic = process.argv[2] || process.env['SB_CHAT_TOPIC'] || 'chat';
+var subscription = process.argv[3] || process.env['SB_CHAT_SUBSCRIPTION'] || 'chatA';
+var port = process.argv[4] || process.env['SB_CHAT_PORT'] || 3000;
 
 /**
  * App configuration.
