@@ -6,9 +6,9 @@ var express = require('express')
   , http = require('http')
   , stylus = require('stylus')
   , nib = require('nib')
-  , sio = require('../../node_modules/socket.io')
-  , azure = require('../../node_modules/azure')
-  , SbStore = require('../../lib/sbstore');
+  , sio = require('socket.io')
+  , azure = require('azure')
+  , SbStore = require('socket.io-servicebus');
 
 /**
  * App.
@@ -18,9 +18,10 @@ var app = express();
 
 // Pick up port, topic, & subscription names from command line / environment
 
-var topic = process.argv[2] || process.env['SB_CHAT_TOPIC'] || 'chat';
-var subscription = process.argv[3] || process.env['SB_CHAT_SUBSCRIPTION'] || 'chatA';
-var port = process.argv[4] || process.env['SB_CHAT_PORT'] || 3000;
+var sbconn = process.argv[2] || process.env['SB_CONN'] //connection string from portal
+var topic = process.argv[3] || process.env['SB_CHAT_TOPIC'] || 'sbchat'; 
+var subscription = process.argv[4] || process.env['SB_CHAT_SUBSCRIPTION'] || 'client1';
+var port = process.argv[5] || process.env['PORT'] || 3000;
 
 /**
  * App configuration.
@@ -72,7 +73,7 @@ io.configure(function () {
   io.set('store', new SbStore({
     topic: topic,
     subscription: subscription,
-    serviceBusService: azure.createServiceBusService()
+    serviceBusService: azure.createServiceBusService(sbconn)
   }));
 
   io.set('transports', ['xhr-polling']);
