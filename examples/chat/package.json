@@ -6,7 +6,6 @@
     "start": "node app"
   },
   "dependencies": {
-    "azure": ">= 0.6.9",
     "socket.io": ">= 0.9.13",
     "socket.io-servicebus": "https://github.com/christav/socket.io-servicebus/tarball/master",
     "express": "3.0.0rc5",

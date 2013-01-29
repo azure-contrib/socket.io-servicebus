@@ -7,7 +7,6 @@ var express = require('express')
   , stylus = require('stylus')
   , nib = require('nib')
   , sio = require('socket.io')
-  , azure = require('azure')
   , SbStore = require('socket.io-servicebus');
 
 /**
@@ -73,7 +72,7 @@ io.configure(function () {
   io.set('store', new SbStore({
     topic: topic,
     subscription: subscription,
-    serviceBusService: azure.createServiceBusService(sbconn)
+    connectionString: sbconn
   }));
 
   io.set('transports', ['xhr-polling']);
