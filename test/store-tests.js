@@ -14,7 +14,8 @@
 */
 
 var should = require('should')
-  , sinon = require('sinon');
+  , sinon = require('sinon')
+  , utils = require('util');
 
 var io = require('socket.io')
   , SbStore = require('../lib/sbstore')
@@ -60,6 +61,10 @@ describe("Service Bus Store objects", function() {
 
     it('should send message to servicebus topic', function () {
       serviceBusMock.send.calledOnce.should.be.true;
+      var call = serviceBusMock.send.getCall(0);
+      console.log(utils.inspect(call.args));
+      JSON.parse(call.args[0])['type'].should.equal('message');
+      JSON.parse(call.args[0]).args.should.have.length(0);
     });
 
     it('should emit local publish event', function () {
@@ -101,6 +106,8 @@ describe("Service Bus Store objects", function() {
       subscribeMessageListener.calledWith('message2', subscriber2).should.be.true;
       subscribeMessageListener.calledWith('message3', subscriber3).should.be.true;
     });
+
+    it('should call subscriber when message received');
   });
 });
 
