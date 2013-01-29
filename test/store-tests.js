@@ -15,7 +15,7 @@
 
 var should = require('should')
   , sinon = require('sinon')
-  , utils = require('util');
+  , util = require('util');
 
 var io = require('socket.io')
   , SbStore = require('../lib/sbstore')
@@ -29,11 +29,13 @@ describe("Service Bus Store objects", function() {
   });
 
   describe('when publishing', function () {
+    var formatter = new Formatter('some-node');
+    var packMethod = formatter.pack;
+    var unpackMethod = formatter.unpack;
 
-    var formatter = {
-      pack: sinon.stub().returns('{type: "message", args: []}'),
-      unpack: sinon.stub().returns({type: "message", args: []})
-    };
+    sinon.stub(formatter, "pack", packMethod);
+
+    sinon.stub(formatter, "unpack", unpackMethod);
 
     var serviceBusMock = {
       send: sinon.stub()
@@ -62,9 +64,11 @@ describe("Service Bus Store objects", function() {
     it('should send message to servicebus topic', function () {
       serviceBusMock.send.calledOnce.should.be.true;
       var call = serviceBusMock.send.getCall(0);
-      console.log(utils.inspect(call.args));
-      JSON.parse(call.args[0])['type'].should.equal('message');
-      JSON.parse(call.args[0]).args.should.have.length(0);
+      var args = JSON.parse(call.args[0].body);
+      args.should.have.length(3);
+      args[0].should.equal(1);
+      args[1].should.equal(2);
+      args[2].should.equal(3);
     });
 
     it('should emit local publish event', function () {
@@ -89,7 +93,9 @@ describe("Service Bus Store objects", function() {
 
     var subscriber1 = sinon.spy();
     var subscriber2 = sinon.spy();
+    var subscriber2a = sinon.spy();
     var subscriber3 = sinon.spy();
+
     var subscribeMessageListener = sinon.spy();
 
     before(function () {
@@ -97,17 +103,30 @@ describe("Service Bus Store objects", function() {
 
       store.subscribe('message1', subscriber1);
       store.subscribe('message2', subscriber2);
+      store.subscribe('message2', subscriber2a);
       store.subscribe('message3', subscriber3);
+
+      var receivedMessage = formatter.pack('message2', [6, 7, 'eight']);
+      store.receiveMessage(receivedMessage);      
     });
 
     it('should emit subscribe events', function () {
-      subscribeMessageListener.callCount.should.equal(3);
+      subscribeMessageListener.callCount.should.equal(4);
       subscribeMessageListener.calledWith('message1', subscriber1).should.be.true;
       subscribeMessageListener.calledWith('message2', subscriber2).should.be.true;
+      subscribeMessageListener.calledWith('message2', subscriber2a).should.be.true;
       subscribeMessageListener.calledWith('message3', subscriber3).should.be.true;
     });
 
-    it('should call subscriber when message received');
+    it('should call all subscribers when message received', function () {
+      subscriber2.calledOnce.should.be.true;
+      subscriber2a.calledOnce.should.be.true;
+    });
+
+    it('should not call subscribers for other messages', function () {
+      subscriber1.called.should.be.false;
+      subscriber3.called.should.be.false;
+    });
   });
 });
 
