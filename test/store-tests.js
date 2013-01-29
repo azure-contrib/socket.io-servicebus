@@ -17,7 +17,8 @@ var should = require('should')
   , sinon = require('sinon');
 
 var io = require('socket.io')
-  , SbStore = require('../lib/sbstore.js');
+  , SbStore = require('../lib/sbstore')
+  , Formatter = require('../lib/formatter');
 
 describe("Service Bus Store objects", function() {
   
@@ -72,4 +73,34 @@ describe("Service Bus Store objects", function() {
       args[2].should.equal(3);
     });
   });
+
+  describe('when receiving', function () {
+    var formatter = new Formatter('some-node-id');
+    serviceBusMock = {};
+    var store = new SbStore({
+      serviceBusInterface: serviceBusMock,
+      messageFormatter: formatter
+    });
+
+    var subscriber1 = sinon.spy();
+    var subscriber2 = sinon.spy();
+    var subscriber3 = sinon.spy();
+    var subscribeMessageListener = sinon.spy();
+
+    before(function () {
+      store.on('subscribe', subscribeMessageListener);
+
+      store.subscribe('message1', subscriber1);
+      store.subscribe('message2', subscriber2);
+      store.subscribe('message3', subscriber3);
+    });
+
+    it('should emit subscribe events', function () {
+      subscribeMessageListener.callCount.should.equal(3);
+      subscribeMessageListener.calledWith('message1', subscriber1).should.be.true;
+      subscribeMessageListener.calledWith('message2', subscriber2).should.be.true;
+      subscribeMessageListener.calledWith('message3', subscriber3).should.be.true;
+    });
+  });
 });
+
