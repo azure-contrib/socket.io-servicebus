@@ -21,11 +21,32 @@ var io = require('socket.io')
   , SbStore = require('../lib/sbstore')
   , Formatter = require('../lib/formatter');
 
-describe("Service Bus Store objects", function() {
-  
-  it("should be createable", function() {
-    var store = new SbStore();
-    should.exist(store);
+describe('Service Bus Store objects', function() {
+
+  before(function () {
+    mockServiceBusCreation();
+  });
+
+  after(function () {
+    undoMocks();
+  });
+
+  describe('when creating', function () {
+    var store;
+
+    before(function () {
+      store = new SbStore({});
+    });
+
+    it('should create a formatter', function () {
+      store.formatter.should.exist;
+      store.formatter.should.be.an.instanceof(Formatter);
+      store.nodeId.should.equal(store.formatter.nodeId);
+    });
+
+    it('should start the service bus polling', function () {
+      store.sb.start.called.should.be.true;
+    });
   });
 
   describe('when publishing', function () {
@@ -33,20 +54,15 @@ describe("Service Bus Store objects", function() {
     var packMethod = formatter.pack;
     var unpackMethod = formatter.unpack;
 
-    sinon.stub(formatter, "pack", packMethod);
+    sinon.stub(formatter, 'pack', packMethod);
 
-    sinon.stub(formatter, "unpack", unpackMethod);
-
-    var serviceBusMock = {
-      send: sinon.stub()
-    };
+    sinon.stub(formatter, 'unpack', unpackMethod);
 
     var store;
     var eventsEmitted = [];
 
     before(function () {
       store = new SbStore({
-        serviceBusInterface: serviceBusMock,
         messageFormatter: formatter,
         });
 
@@ -62,8 +78,8 @@ describe("Service Bus Store objects", function() {
     });
 
     it('should send message to servicebus topic', function () {
-      serviceBusMock.send.calledOnce.should.be.true;
-      var call = serviceBusMock.send.getCall(0);
+      store.sb.send.calledOnce.should.be.true;
+      var call = store.sb.send.getCall(0);
       var args = JSON.parse(call.args[0].body);
       args.should.have.length(3);
       args[0].should.equal(1);
@@ -85,11 +101,8 @@ describe("Service Bus Store objects", function() {
 
   describe('when receiving', function () {
     var formatter = new Formatter('some-node-id');
-    serviceBusMock = {};
-    var store = new SbStore({
-      serviceBusInterface: serviceBusMock,
-      messageFormatter: formatter
-    });
+
+    var store;
 
     var subscriber1 = sinon.spy();
     var subscriber2 = sinon.spy();
@@ -99,6 +112,8 @@ describe("Service Bus Store objects", function() {
     var subscribeMessageListener = sinon.spy();
 
     before(function () {
+      store = new SbStore({messageFormatter: formatter});
+
       store.on('subscribe', subscribeMessageListener);
 
       store.subscribe('message1', subscriber1);
@@ -130,3 +145,19 @@ describe("Service Bus Store objects", function() {
   });
 });
 
+function mockServiceBusCreation() {
+  console.log('Mocking creating service bus interface')
+  sinon.stub(SbStore.prototype, 'createServiceBusInterface',
+    function (options) {
+      return {
+        start: sinon.stub(),
+        send: sinon.stub()
+      }
+    }
+  );
+}
+
+function undoMocks() {
+  console.log('undoing service bus creation mocks');
+  SbStore.prototype.createServiceBusInterface.restore();
+}

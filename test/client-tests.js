@@ -24,8 +24,16 @@ describe("Service Bus Store client objects", function() {
   var client;
   var clientId = 'a client';
 
+  before(function () {
+    mockServiceBusCreation();
+  });
+
+  after(function () {
+    undoMocks();
+  });
+
   beforeEach(function() {
-    store = new SbStore();
+    store = new SbStore({ });
     client = new SbStore.Client(store, clientId);
   });
 
@@ -58,6 +66,7 @@ describe("Service Bus Store client objects", function() {
       });
     });
   });
+
   describe('has', function () {
     it('should return false if key does not exist', function (done) {
       client.has('no such key', function (err, keyExists) {
@@ -141,3 +150,20 @@ describe("Service Bus Store client objects", function() {
     });
   });
 });
+
+function mockServiceBusCreation() {
+  console.log('Mocking creating service bus interface')
+  sinon.stub(SbStore.prototype, 'createServiceBusInterface',
+    function (options) {
+      return {
+        start: sinon.stub(),
+        stop: sinon.stub()
+      }
+    }
+  );
+}
+
+function undoMocks() {
+  console.log('undoing service bus creation mocks');
+  SbStore.prototype.createServiceBusInterface.restore();
+}
