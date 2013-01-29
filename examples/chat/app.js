@@ -18,10 +18,10 @@ var app = express();
 
 // Pick up port, topic, & subscription names from command line / environment
 
-var sbconn = process.argv[2] || process.env['SB_CONN'] //connection string from portal
-var topic = process.argv[3] || process.env['SB_CHAT_TOPIC'] || 'sbchat'; 
-var subscription = process.argv[4] || process.env['SB_CHAT_SUBSCRIPTION'] || 'client1';
-var port = process.argv[5] || process.env['PORT'] || 3000;
+var topic = process.argv[2] || process.env['SB_CHAT_TOPIC'] || 'sbchat'; 
+var subscription = process.argv[3] || process.env['SB_CHAT_SUBSCRIPTION'] || 'client1';
+var port = process.argv[4] || process.env['PORT'] || 3000;
+var sbconn = process.argv[5] || process.env['SB_CONN'] //connection string from portal
 
 /**
  * App configuration.
