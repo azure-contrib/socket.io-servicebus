@@ -14,7 +14,8 @@
 */
 
 var 
-  SbStore = require('../../lib/sbstore')
+  Formatter = require('../../lib/formatter')
+  , SbStore = require('../../lib/sbstore')
   , sinon = require('sinon')
   , util = require('util');
 
@@ -27,9 +28,28 @@ function mockServiceBusCreation() {
   });
 }
 
+function mockFormatterCreation() {
+  var originalPack = Formatter.prototype.pack;
+  var originalUnpack = Formatter.prototype.unpack;
+
+  sinon.stub(SbStore.prototype, 'createFormatter', function (nodeId) {
+    return {
+      nodeId: nodeId,
+      pack: sinon.spy(originalPack),
+      unpack: sinon.spy(originalUnpack)
+    }
+  });
+}
+
 function undoServiceBusCreationMocks() {
   SbStore.prototype.createServiceBusInterface.restore();
 }
 
+function undoFormatterCreationMocks() {
+  SbStore.prototype.createFormatter.restore();
+}
+
 exports.mockServiceBusCreation = mockServiceBusCreation;
 exports.undoServiceBusCreationMocks = undoServiceBusCreationMocks;
+exports.mockFormatterCreation = mockFormatterCreation;
+exports.undoFormatterCreationMocks = undoFormatterCreationMocks;

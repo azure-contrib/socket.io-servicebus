@@ -26,6 +26,7 @@ describe('Service Bus Store objects', function() {
 
   before(function () {
     sbMocks.mockServiceBusCreation();
+    sbMocks.mockFormatterCreation();
   });
 
   after(function () {
@@ -41,7 +42,7 @@ describe('Service Bus Store objects', function() {
 
     it('should create a formatter', function () {
       store.formatter.should.exist;
-      store.formatter.should.be.an.instanceof(Formatter);
+      SbStore.prototype.createFormatter.called.should.be.true;
       store.nodeId.should.equal(store.formatter.nodeId);
     });
 
@@ -51,21 +52,11 @@ describe('Service Bus Store objects', function() {
   });
 
   describe('when publishing', function () {
-    var formatter = new Formatter('some-node');
-    var packMethod = formatter.pack;
-    var unpackMethod = formatter.unpack;
-
-    sinon.stub(formatter, 'pack', packMethod);
-
-    sinon.stub(formatter, 'unpack', unpackMethod);
-
     var store;
     var eventsEmitted = [];
 
     before(function () {
-      store = new SbStore({
-        messageFormatter: formatter,
-        });
+      store = new SbStore({ nodeId: 'my-node-id' });
 
       store.on('publish', function (name) {
         var args = Array.prototype.slice.call(arguments, 1);
@@ -75,7 +66,7 @@ describe('Service Bus Store objects', function() {
     });
 
     it('should package message to publish', function () {
-      formatter.pack.calledOnce.should.be.true;
+      store.formatter.pack.calledOnce.should.be.true;
     });
 
     it('should send message to servicebus topic', function () {
@@ -101,8 +92,6 @@ describe('Service Bus Store objects', function() {
   });
 
   describe('when receiving', function () {
-    var formatter = new Formatter('some-node-id');
-
     var store;
 
     var subscriber1 = sinon.spy();
@@ -113,7 +102,7 @@ describe('Service Bus Store objects', function() {
     var subscribeMessageListener = sinon.spy();
 
     before(function () {
-      store = new SbStore({messageFormatter: formatter});
+      store = new SbStore({});
 
       store.on('subscribe', subscribeMessageListener);
 
@@ -122,6 +111,7 @@ describe('Service Bus Store objects', function() {
       store.subscribe('message2', subscriber2a);
       store.subscribe('message3', subscriber3);
 
+      var formatter = new Formatter('some-other-node');
       var receivedMessage = formatter.pack('message2', [6, 7, 'eight']);
       store.receiveMessage(receivedMessage);      
     });
@@ -141,6 +131,13 @@ describe('Service Bus Store objects', function() {
 
     it('should not call subscribers for other messages', function () {
       subscriber1.called.should.be.false;
+      subscriber3.called.should.be.false;
+    });
+
+    it('should not call subscribers for messages from itself', function () {
+      var receivedMessage = store.formatter.pack('message3', 'a message');
+      store.receiveMessage(receivedMessage);
+
       subscriber3.called.should.be.false;
     });
   });
