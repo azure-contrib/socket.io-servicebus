@@ -1,0 +1,17 @@
+{
+  "name": "socket-io-chat-test",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "azure": ">= 0.6.9",
+    "socket.io": ">= 0.9.13",
+    "socket.io-servicebus": "https://github.com/christav/socket.io-servicebus/tarball/master",
+    "express": "3.0.0rc5",
+    "jade": "*",
+    "stylus": "0.19.0",
+    "nib": "0.2.0"
+  }
+}
