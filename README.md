@@ -39,12 +39,12 @@ io.configure(function () {
   io.set('store', new SbStore({
     topic: topicName,
     subscription: subscriptionName,
-    connectionString: connectionStringFromPortal
+    connectionString: connectionString
   }));
 });
 ```
 
-From here, communications to and from the server will get routed over Service Bus.
+The connection string can either be retrieved from the portal, or using our powershell / x-plat CLI tools. From here, communications to and from the server will get routed over Service Bus.
 
 ## Current Issues
 
