@@ -3,6 +3,7 @@
   "author": "Microsoft Corporation",
   "contributors": [
     "Block, Glenn <gblock@microsoft.com>",
+    "Cooke, Jason <jcooke@microsoft.com>",
     "Tavares, Chris <ctavares@microsoft.com>"
   ],
   "version": "0.0.1",
@@ -37,13 +38,13 @@
     "sinon": "~1.5.2",
     "should": "*"
   },
-  "homepage": "http://github.com/christav/socket.io-servicebus",
+  "homepage": "http://github.com/WindowsAzure/socket.io-servicebus",
   "repository": {
     "type": "git",
-    "url": "git@github.com:christav/socket.io-servicebus.git"
+    "url": "git@github.com:WindowsAzure/socket.io-servicebus.git"
   },
   "bugs": {
-    "url": "http://github.com/christav/socket.io-servicebus/issues"
+    "url": "http://github.com/WindowsAzure/socket.io-servicebus/issues"
   },
   "scripts": {
     "test": "mocha -R spec"
