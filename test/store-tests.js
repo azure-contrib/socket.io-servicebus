@@ -117,7 +117,7 @@ describe('Service Bus Store objects', function() {
     };
 
     before(function () {
-      store = new SbStore({listeners: SbStore.makeListener(listeners)});
+      store = new SbStore({listeners: [SbStore.logging.makeListener(listeners)]});
 
       store.subscribe('message1', subscriber1);
       store.subscribe('message2', subscriber2);
