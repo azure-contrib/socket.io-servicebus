@@ -35,9 +35,13 @@ describe('Service Bus Store objects', function() {
 
   describe('when creating', function () {
     var store;
+    var listener = { 
+      store: sinon.spy(),
+      sb: sinon.spy()
+    };
 
     before(function () {
-      store = new SbStore({});
+      store = new SbStore({ listeners: [listener]});
     });
 
     it('should create a formatter', function () {
@@ -48,6 +52,13 @@ describe('Service Bus Store objects', function() {
 
     it('should start the service bus polling', function () {
       store.sb.start.called.should.be.true;
+    });
+
+    it('should hook up listeners', function () {
+      listener.store.calledOnce.should.be.true;
+      listener.store.getCall(0).calledWithExactly(store).should.be.true;
+      listener.sb.calledOnce.should.be.true;
+      listener.sb.getCall(0).calledWithExactly(store.sb).should.be.true;
     });
   });
 
@@ -99,12 +110,14 @@ describe('Service Bus Store objects', function() {
     var subscriber2a = sinon.spy();
     var subscriber3 = sinon.spy();
 
-    var subscribeMessageListener = sinon.spy();
+    var listeners = {
+      onreceived: sinon.spy(),
+      onsubscribe: sinon.spy(),
+      onunsubscribe: sinon.spy()
+    };
 
     before(function () {
-      store = new SbStore({});
-
-      store.on('subscribe', subscribeMessageListener);
+      store = new SbStore({listeners: [SbStore.logging.makeListener(listeners)]});
 
       store.subscribe('message1', subscriber1);
       store.subscribe('message2', subscriber2);
@@ -117,11 +130,11 @@ describe('Service Bus Store objects', function() {
     });
 
     it('should emit subscribe events', function () {
-      subscribeMessageListener.callCount.should.equal(4);
-      subscribeMessageListener.calledWith('message1', subscriber1).should.be.true;
-      subscribeMessageListener.calledWith('message2', subscriber2).should.be.true;
-      subscribeMessageListener.calledWith('message2', subscriber2a).should.be.true;
-      subscribeMessageListener.calledWith('message3', subscriber3).should.be.true;
+      listeners.onsubscribe.callCount.should.equal(4);
+      listeners.onsubscribe.calledWith('message1', subscriber1).should.be.true;
+      listeners.onsubscribe.calledWith('message2', subscriber2).should.be.true;
+      listeners.onsubscribe.calledWith('message2', subscriber2a).should.be.true;
+      listeners.onsubscribe.calledWith('message3', subscriber3).should.be.true;
     });
 
     it('should call all subscribers when message received', function () {
@@ -132,6 +145,10 @@ describe('Service Bus Store objects', function() {
     it('should not call subscribers for other messages', function () {
       subscriber1.called.should.be.false;
       subscriber3.called.should.be.false;
+    });
+
+    it('should emit received event when message received', function () {
+      listeners.onreceived.calledOnce.should.be.true;
     });
 
     it('should not call subscribers for messages from itself', function () {
