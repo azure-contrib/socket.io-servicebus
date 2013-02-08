@@ -7,7 +7,13 @@ var express = require('express')
   , stylus = require('stylus')
   , nib = require('nib')
   , sio = require('socket.io')
-  , SbStore = require('socket.io-servicebus');
+  , SbStore;
+
+if (process.env.TEST_SB_CHAT) {
+  SbStore = require('../../lib/sbstore');
+} else {
+  SbStore = require('socket.io-servicebus');
+}
 
 /**
  * App.

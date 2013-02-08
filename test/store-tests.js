@@ -26,7 +26,6 @@ describe('Service Bus Store objects', function() {
 
   before(function () {
     sbMocks.mockServiceBusCreation();
-    sbMocks.mockFormatterCreation();
   });
 
   after(function () {
@@ -42,12 +41,6 @@ describe('Service Bus Store objects', function() {
 
     before(function () {
       store = new SbStore({ listeners: [listener]});
-    });
-
-    it('should create a formatter', function () {
-      store.formatter.should.exist;
-      SbStore.prototype.createFormatter.called.should.be.true;
-      store.nodeId.should.equal(store.formatter.nodeId);
     });
 
     it('should start the service bus polling', function () {
@@ -76,18 +69,14 @@ describe('Service Bus Store objects', function() {
       store.publish('message', 1, 2, 3);
     });
 
-    it('should package message to publish', function () {
-      store.formatter.pack.calledOnce.should.be.true;
-    });
-
     it('should send message to servicebus topic', function () {
       store.sb.send.calledOnce.should.be.true;
       var call = store.sb.send.getCall(0);
-      var args = JSON.parse(call.args[0].body);
-      args.should.have.length(3);
-      args[0].should.equal(1);
-      args[1].should.equal(2);
-      args[2].should.equal(3);
+      call.args[0].should.equal('message');
+      call.args[1].should.have.length(3);
+      call.args[1][0].should.equal(1);
+      call.args[1][1].should.equal(2);
+      call.args[1][2].should.equal(3);
     });
 
     it('should emit local publish event', function () {
@@ -126,7 +115,7 @@ describe('Service Bus Store objects', function() {
 
       var formatter = new Formatter('some-other-node');
       var receivedMessage = formatter.pack('message2', [6, 7, 'eight']);
-      store.receiveMessage(receivedMessage);      
+      store.receiveMessage('some-other-node', 'message2', [6, 7, 'eight']);
     });
 
     it('should emit subscribe events', function () {
@@ -152,8 +141,7 @@ describe('Service Bus Store objects', function() {
     });
 
     it('should not call subscribers for messages from itself', function () {
-      var receivedMessage = store.formatter.pack('message3', 'a message');
-      store.receiveMessage(receivedMessage);
+      store.receiveMessage(store.nodeId, 'message3', ['a message']);
 
       subscriber3.called.should.be.false;
     });
