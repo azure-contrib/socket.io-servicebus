@@ -72,7 +72,8 @@ io.configure(function () {
   io.set('store', new SbStore({
     topic: topic,
     subscription: subscription,
-    connectionString: sbconn
+    connectionString: sbconn,
+    listeners: SbStore.logging.console
   }));
 
   io.set('transports', ['xhr-polling']);
