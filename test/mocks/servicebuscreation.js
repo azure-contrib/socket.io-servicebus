@@ -23,7 +23,8 @@ function mockServiceBusCreation() {
   sinon.stub(SbStore.prototype, 'createServiceBusInterface', function (options) {
     return {
       start: sinon.stub(),
-      send: sinon.stub()
+      send: sinon.stub(),
+      on: sinon.stub()
     };
   });
 }
