@@ -64,6 +64,11 @@ describe('batching layer', function () {
       batcher.start(sinon.spy());
     });
 
+    it('should not send batch if no messages pending', function () {
+      clock.tick(251);
+      batcher.sb.send.called.should.be.false;
+    });
+
     it('should batch messages that arrive before timeout', function () {
       batcher.send('message1', [1, 2, 3]);
       batcher.send('message2', [4, 5, 6]);
@@ -76,6 +81,7 @@ describe('batching layer', function () {
       clock.tick(251);
 
       batcher.pending.length.should.equal(0);
+      batcher.sb.send.callCount.should.equal(1);
     });
   });
 
