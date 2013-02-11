@@ -19,8 +19,7 @@ var sbMocks = require('./mocks/servicebuscreation')
   , util = require('util');
 
 var io = require('socket.io')
-  , SbStore = require('../lib/sbstore')
-  , Formatter = require('../lib/formatter');
+  , SbStore = require('../lib/sbstore');
 
 describe('Service Bus Store objects', function() {
 
@@ -113,8 +112,6 @@ describe('Service Bus Store objects', function() {
       store.subscribe('message2', subscriber2a);
       store.subscribe('message3', subscriber3);
 
-      var formatter = new Formatter('some-other-node');
-      var receivedMessage = formatter.pack('message2', [6, 7, 'eight']);
       store.receiveMessage('some-other-node', 'message2', [6, 7, 'eight']);
     });
 

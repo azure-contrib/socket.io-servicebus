@@ -42,9 +42,10 @@ describe('batching layer', function () {
     before(function () {
       batcher = new BatchInterface(createOptions, {
         start: sinon.stub(),
-        send: sinon.stub()
+        send: sinon.stub(),
+        on: sinon.stub()
       });
-      batcher.start(sinon.spy());
+      batcher.start();
     });
 
     it('should not send batch if no messages pending', function () {
@@ -83,8 +84,10 @@ describe('batching layer', function () {
     before(function() {
       batcher = new BatchInterface(createOptions, {
         start: sinon.spy(),
+        on: sinon.spy()
       });
-      batcher.start(receiver);
+      batcher.on('message', receiver);
+      batcher.start();
       batcher.receiveMessage('another-node', 'batch', batchedMessages);
 
       for(var i = 0; i < receiver.callCount; ++i) {
