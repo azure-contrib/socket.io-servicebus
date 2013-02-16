@@ -13,9 +13,7 @@
 * limitations under the License.
 */
 
-var 
-  Formatter = require('../../lib/formatter')
-  , SbStore = require('../../lib/sbstore')
+var SbStore = require('../../lib/sbstore')
   , sinon = require('sinon')
   , util = require('util');
 
