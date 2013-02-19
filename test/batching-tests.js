@@ -21,47 +21,31 @@ var BatchInterface = require('../lib/batchinterface');
 describe('batching layer', function () {
   var clock;
 
+  var createOptions = {
+    nodeId: 'nodeid',
+    serviceBusInterface: null,
+    topic: 'topic',
+    subscription: 'subscription'
+  };
+
   before(function() {
     clock = sinon.useFakeTimers();
-    sinon.stub(BatchInterface.prototype, 'createServiceBusInterface', function () {
-      return {
-        send: sinon.stub(),
-        start: sinon.stub(),
-        on: sinon.stub()
-      };
-    });
   });
 
   after(function(){
     clock.restore();
-    BatchInterface.prototype.createServiceBusInterface.restore();
-  });
-
-  describe('creation', function () {
-    var batcher;
-    before(function () {
-      batcher = new BatchInterface('nodeid', null, 'topic', 'subscription');
-    });
-
-    it('should create inner service bus interface', function () {
-      batcher.createServiceBusInterface.calledOnce.should.be.true;
-    });
-
-    it('should pass correct parameters to creation function', function() {
-      var createCall = batcher.createServiceBusInterface.getCall(0);
-      createCall.args[0].should.equal('nodeid');
-      should.not.exist(createCall.args[1]);
-      createCall.args[2].should.equal('topic');
-      createCall.args[3].should.equal('subscription');
-    });
   });
 
   describe('when sending messages', function () {
     var batcher;
 
     before(function () {
-      batcher = new BatchInterface('nodeid', null, 'topic', 'subscription');
-      batcher.start(sinon.spy());
+      batcher = new BatchInterface(createOptions, {
+        start: sinon.stub(),
+        send: sinon.stub(),
+        on: sinon.stub()
+      });
+      batcher.start();
     });
 
     it('should not send batch if no messages pending', function () {
@@ -98,8 +82,12 @@ describe('batching layer', function () {
     var calls = [];
 
     before(function() {
-      batcher = new BatchInterface('nodeId', null, 'topic', 'subscription');
-      batcher.start(receiver);
+      batcher = new BatchInterface(createOptions, {
+        start: sinon.spy(),
+        on: sinon.spy()
+      });
+      batcher.on('message', receiver);
+      batcher.start();
       batcher.receiveMessage('another-node', 'batch', batchedMessages);
 
       for(var i = 0; i < receiver.callCount; ++i) {
