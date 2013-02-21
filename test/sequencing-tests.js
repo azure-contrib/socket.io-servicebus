@@ -17,11 +17,10 @@ var should = require('should')
   , sinon = require('sinon')
   , util = require('util');
 
-var SequencingInterface = require('../lib/sequencinginterface');
+var MessageSequencer = require('../lib/messagesequencer');
 
 var createOptions = {
   nodeId: 'someNode',
-  serviceBusInterface: null,
   topic: 'aTopic',
   subscription: 'aSubscription'
 };
@@ -36,7 +35,7 @@ describe('Message sequencing layer', function () {
         on: sinon.spy(),
         start: sinon.spy()
       };
-      sequencer = new SequencingInterface(createOptions, innerInterface);      
+      sequencer = new MessageSequencer(createOptions, innerInterface);      
     });
 
     it('should register for message events from inner', function() {
@@ -66,7 +65,7 @@ describe('Message sequencing layer', function () {
         send: sinon.spy()
       };
 
-      sequencer = new SequencingInterface(createOptions, innerInterface);
+      sequencer = new MessageSequencer(createOptions, innerInterface);
     });
 
     it('should pass message to inner', function () {
@@ -123,7 +122,7 @@ describe('Message sequencing layer', function () {
         send: noop
       };
 
-      sequencer = new SequencingInterface(createOptions, innerInterface);
+      sequencer = new MessageSequencer(createOptions, innerInterface);
       receivedMessages = [];
       sequencer.on('message', function (sourceNodeId, msg, args, metadata) {
         receivedMessages.push([sourceNodeId, msg, args, metadata]);
@@ -159,7 +158,7 @@ describe('Message sequencing layer', function () {
         send: noop
       };
 
-      sequencer = new SequencingInterface(createOptions, innerInterface);
+      sequencer = new MessageSequencer(createOptions, innerInterface);
       receivedMessages = [];
       sequencer.on('message', function (sourceNodeId, msg, args, metadata) {
         receivedMessages.push([sourceNodeId, msg, args, metadata]);
@@ -237,7 +236,7 @@ describe('Message sequencing layer', function () {
         send: noop
       };
 
-      sequencer = new SequencingInterface(createOptions, innerInterface);
+      sequencer = new MessageSequencer(createOptions, innerInterface);
       receivedMessages = [];
       sequencer.on('message', function (sourceNodeId, msg, args, metadata) {
         receivedMessages.push([sourceNodeId, msg, args, metadata]);
@@ -321,7 +320,7 @@ describe('Message sequencing layer', function () {
           stop: sinon.spy(),
         };
 
-      sequencer = new SequencingInterface(createOptions, innerInterface);
+      sequencer = new MessageSequencer(createOptions, innerInterface);
     });
 
     it('should stop inner', function () {
@@ -351,6 +350,14 @@ describe('Message sequencing layer', function () {
       sequencer.stop();
 
       innerInterface.stop.calledOnce.should.be.true;
+    });
+
+    it('should pass callback to inner to invoke', function () {
+      sequencer.start();
+      function stopCallback() { }
+      sequencer.stop(stopCallback);
+
+      innerInterface.stop.firstCall.args[0].should.equal(stopCallback);
     });
   });
 });

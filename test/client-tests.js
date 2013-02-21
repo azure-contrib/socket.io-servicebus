@@ -13,8 +13,7 @@
 * limitations under the License.
 */
 
-var sbMocks = require('./mocks/servicebuscreation')
-  , should = require('should')
+var should = require('should')
   , sinon = require('sinon');
 
 var io = require('socket.io')
@@ -24,13 +23,21 @@ describe("Service Bus Store client objects", function() {
   var store;
   var client;
   var clientId = 'a client';
+  var sandbox;
 
   before(function () {
-    sbMocks.mockServiceBusCreation();
+    sandbox = sinon.sandbox.create();
+    sandbox.stub(SbStore.prototype, 'createServiceBusConnector', function (options) {
+      return {
+        start: sandbox.stub(),
+        send: sandbox.stub(),
+        on: sandbox.stub()
+      }
+    });
   });
 
   after(function () {
-    sbMocks.undoServiceBusCreationMocks();
+    sandbox.restore();
   });
 
   beforeEach(function() {
