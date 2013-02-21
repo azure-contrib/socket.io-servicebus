@@ -16,14 +16,13 @@
 var should = require('should')
   , sinon = require('sinon');
 
-var BatchInterface = require('../lib/batchinterface');
+var MessageBatcher = require('../lib/messagebatcher');
 
 describe('batching layer', function () {
   var clock;
 
   var createOptions = {
     nodeId: 'nodeid',
-    serviceBusInterface: null,
     topic: 'topic',
     subscription: 'subscription'
   };
@@ -40,7 +39,7 @@ describe('batching layer', function () {
     var batcher;
 
     before(function () {
-      batcher = new BatchInterface(createOptions, {
+      batcher = new MessageBatcher(createOptions, {
         start: sinon.stub(),
         send: sinon.stub(),
         on: sinon.stub()
@@ -82,7 +81,7 @@ describe('batching layer', function () {
     var calls = [];
 
     before(function() {
-      batcher = new BatchInterface(createOptions, {
+      batcher = new MessageBatcher(createOptions, {
         start: sinon.spy(),
         on: sinon.spy()
       });
