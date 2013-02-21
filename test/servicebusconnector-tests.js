@@ -138,7 +138,7 @@ describe('Service Bus connection layer', function () {
     });
   });
 
-  describe('when receiving', function () {
+  describe('when receiving with one receive at a time', function () {
     var sb;
     var connector;
     var receive;
@@ -221,6 +221,74 @@ describe('Service Bus connection layer', function () {
     });
   });
 
+  describe('when receiving with multiple receives at a time', function () {
+    var sb;
+    var connector;
+    var receive;
+    var numReceives = 8;
+    beforeEach(function () {
+      receive = [];
+
+      sb = {
+        sendTopicMessage: sinon.spy(),
+        receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
+          receive.push(callback);
+        })
+      };
+
+      connector = new ServiceBusConnector({
+        nodeId: nodeId,
+        topic: topicName,
+        subscription: subscriptionName,
+        serviceBusService: sb,
+        numReceives: numReceives
+      });
+
+      connector.start();
+    });
+
+    it('should raise message event when message is received', function (done) {
+      connector.on('message', function (nodeId, name, args, metadata) {
+        done();
+      });
+
+      receive[0](null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], {seq: 8, next: 11}));
+      receive.shift();
+    });
+
+    it('should repoll service bus after message is received', function () {
+      var originalCalls = sb.receiveSubscriptionMessage.callCount;
+      receive[0](null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], {seq: 8, next: 11}));
+      receive.shift();
+
+      sb.receiveSubscriptionMessage.callCount.should.equal(originalCalls + 1);
+    });
+
+    it('should not raise event and repoll on receive error', function (done) {
+      var originalCalls = sb.receiveSubscriptionMessage.callCount;
+      connector.on('message', function (nodeId, name, args, metadata) {
+        done(new Error('Should not be called')); 
+      });
+
+      receive[0](new Error('Fake error'), null);
+      receive.shift();
+      
+      sb.receiveSubscriptionMessage.callCount.should.equal(originalCalls + 1);
+      done();
+    });
+
+    it('should stop all receivers when stop callback fires', function (done) {
+      connector.stop(function () {
+        connector.receivesRunning.should.equal(0);
+        done();
+      });
+
+      receive.forEach(function (receiveFunc) {
+        receiveFunc(connector, 'someNode', 'someMessage', 'someArgs');
+      });
+    });
+  });
+
   describe('when stopping', function () {
     var sb;
     var connector;
@@ -275,7 +343,8 @@ function makeConnector(serviceBus, callback) {
     nodeId: nodeId,
     topic: topicName,
     subscription: subscriptionName,
-    serviceBusService: serviceBus
+    serviceBusService: serviceBus,
+    numReceives: 1
   });
 
   callback(serviceBus, connector);
