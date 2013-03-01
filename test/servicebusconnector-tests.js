@@ -148,7 +148,8 @@ describe('Service Bus connection layer', function () {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
-        })
+        }),
+        withFilter: sinon.spy()
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
@@ -233,7 +234,8 @@ describe('Service Bus connection layer', function () {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive.push(callback);
-        })
+        }),
+        withFilter: sinon.spy()
       };
 
       connector = new ServiceBusConnector({
@@ -299,7 +301,8 @@ describe('Service Bus connection layer', function () {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
-        })
+        }),
+        withFilter: sinon.spy()
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
@@ -333,7 +336,8 @@ describe('Service Bus connection layer', function () {
 function makeConnectorWithMockSB(callback) {
   var sb = {
     receiveSubscriptionMessage: sinon.spy(),
-    sendTopicMessage: sinon.spy()
+    sendTopicMessage: sinon.spy(),
+    withFilter: function (filter) { return this; }
   };
   makeConnector(sb, callback);
 }
