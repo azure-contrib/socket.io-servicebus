@@ -75,37 +75,6 @@ describe('Message sequencing layer', function () {
       innerInterface.send.calledWithMatch('aMessage', [1, 2, 3]).should.be.true;
 
     });
-
-    it('should add sequence number and next to first message', function () {
-      sequencer.send('firstMessage', [4, 5]);
-
-      innerInterface.send.calledWithMatch('firstMessage', [4, 5], { seq: 0, next: 1 }).should.be.true;
-    });
-    it('should add increasing sequence numbers to next messages', function () {
-      sequencer.send('msg', 'a');
-      sequencer.send('msg', 'b');
-      sequencer.send('msg', 'c');
-
-      innerInterface.send.callCount.should.equal(3);
-      innerInterface.send.calledWithMatch('msg', 'a', {seq: 0}).should.be.true;
-      innerInterface.send.calledWithMatch('msg', 'b', {seq: 1}).should.be.true;
-      should.not.exist(innerInterface.send.getCall(1).args[2].first);
-      innerInterface.send.calledWithMatch('msg', 'c', {seq: 2}).should.be.true;
-      should.not.exist(innerInterface.send.getCall(2).args[2].first);
-    });
-
-    it('should include next sequence number in message', function () {
-      sequencer.send('msg', 'q');
-      sequencer.send('msg', 'r');
-      sequencer.send('msg', 's');
-
-      var firstCall = innerInterface.send.getCall(0);
-      var secondCall = innerInterface.send.getCall(1);
-      var thirdCall = innerInterface.send.getCall(2);
-
-      firstCall.args[2].next.should.equal(secondCall.args[2].seq);
-      secondCall.args[2].next.should.equal(thirdCall.args[2].seq);
-    });
   });
 
   describe('when receiving in order', function () {
@@ -131,14 +100,14 @@ describe('Message sequencing layer', function () {
 
     it('should deliver messages in order', function () {
       var sourceNode = 'node-1';
-      receiveFunc(sourceNode, 'msg', [1, 2, 3], {first: 1, seq: 0, next: 1});
-      receiveFunc(sourceNode, 'msg', [4, 5, 6], {seq: 1, next: 2});
-      receiveFunc(sourceNode, 'msg', [7, 8, 9], {seq: 2, next : 3});
+      receiveFunc(sourceNode, 'msg', [1, 2, 3], 0);
+      receiveFunc(sourceNode, 'msg', [4, 5, 6], 1);
+      receiveFunc(sourceNode, 'msg', [7, 8, 9], 2);
 
       receivedMessages.should.have.length(3);
 
       for(var i = 0, len = receivedMessages.length; i < len; i++) {
-        receivedMessages[i][3].seq.should.equal(i);
+        receivedMessages[i][3].should.equal(i);
       }
     });
   });
@@ -166,26 +135,26 @@ describe('Message sequencing layer', function () {
     });
 
     it('should deliver after first message', function () {
-      send('sourceNode', 'msg', 'hello', { seq: 1, next: 2});
+      send('sourceNode', 'msg', 'hello', 1);
       receivedMessages.should.have.length(1);
     });
 
     it('should ignore messages older than first message received', function () {
-      send('sourceNode', 'msg', 'world', {seq: 1, next: 2});
-      send('sourceNode', 'msg', 'hello', {seq: 0, next:1});
+      send('sourceNode', 'msg', 'world', 1);
+      send('sourceNode', 'msg', 'hello', 0);
 
       receivedMessages.should.have.length(1);
       receivedMessages[0][2].should.equal('world');
     });
 
     it('should deliver all messages when missing message is received', function () {
-      send('sourceNode', 'msg', 'hello', { seq: 0, next: 1});
+      send('sourceNode', 'msg', 'hello', 0);
       receivedMessages.should.have.length(1);
 
-      send('sourceNode', 'msg', 'from node', { seq: 2, next: 3});
+      send('sourceNode', 'msg', 'from node', 2);
       receivedMessages.should.have.length(1);
 
-      send('sourceNode', 'msg', 'world', { seq: 1, next: 2});
+      send('sourceNode', 'msg', 'world', 1);
 
       receivedMessages.should.have.length(3);
 
@@ -195,11 +164,11 @@ describe('Message sequencing layer', function () {
     });
 
     it('should deliver next message if received in order', function () {
-      send('sourceNode', 'msg', 'hello', { seq: 0, next: 1});
-      send('sourceNode', 'msg', 'from node', {seq: 2, next: 3});
-      send('sourceNode', 'msg', 'with affection', {seq: 3, next: 4});
-      send('sourceNode', 'msg', 'and stuff', {seq: 4, next: 5});
-      send('sourceNode', 'msg', 'world', { seq: 1, next: 2});
+      send('sourceNode', 'msg', 'hello', 0);
+      send('sourceNode', 'msg', 'from node', 2);
+      send('sourceNode', 'msg', 'with affection', 3);
+      send('sourceNode', 'msg', 'and stuff', 4);
+      send('sourceNode', 'msg', 'world', 1);
 
       receivedMessages.should.have.length(5);
       receivedMessages[0][2].should.equal('hello');
@@ -210,10 +179,10 @@ describe('Message sequencing layer', function () {
     });
 
     it('should ignore messages older than the next one expected', function () {
-      send('sourceNode', 'msg', 'from node', { seq: 2, next: 3});
-      send('sourceNode', 'msg', 'Hello', {seq: 0, next: 1});
-      send('sourceNode', 'msg', 'with affection', {seq: 3, next: 4});
-      send('sourceNode', 'msg', 'World', { seq: 1, next: 2});
+      send('sourceNode', 'msg', 'from node', 2);
+      send('sourceNode', 'msg', 'Hello', 0);
+      send('sourceNode', 'msg', 'with affection', 3);
+      send('sourceNode', 'msg', 'World', 1);
 
       receivedMessages.should.have.length(2);
       receivedMessages[0][2].should.equal('from node');
@@ -244,64 +213,64 @@ describe('Message sequencing layer', function () {
     });
 
     it('should deliver multiple in order messages', function () {
-      send('n1', 'msg', 'a', { seq: 4, next: 5});
+      send('n1', 'msg', 'a', 4);
       receivedMessages.should.have.length(1);
-      send('n2', 'msg', 'A', { seq: 10, next: 11});
-      receivedMessages.should.have.length(2);
-      send('n2', 'msg', 'B', { seq: 11, next: 12});
-      receivedMessages.should.have.length(3);
-      send('n1', 'msg', 'b', {seq: 5, next: 6});
+      send('n2', 'msg', 'A', 6);
+      receivedMessages.should.have.length(1);
+      send('n2', 'msg', 'B', 7);
+      receivedMessages.should.have.length(1);
+      send('n1', 'msg', 'b', 5);
       receivedMessages.should.have.length(4);
 
-      [['n1', 'a'], ['n2', 'A'], ['n2', 'B'], ['n1', 'b']].forEach(function (testData, i) {
+      [['n1', 'a'], ['n1', 'b'], ['n2', 'A'], ['n2', 'B']].forEach(function (testData, i) {
         receivedMessages[i][0].should.equal(testData[0]);
         receivedMessages[i][2].should.equal(testData[1]);
       })
     });
 
 
-    it('should deliver in order from first node and out of order from second node', function () {
-      send('n1', 'msg', 'a', { seq: 0, next: 1});
+    it('should deliver in order from all nodes', function () {
+      send('n1', 'msg', 'a', 0);
       receivedMessages.should.have.length(1);
 
-      send('n2', 'msg', 'A', { seq: 4, next: 5});
-      receivedMessages.should.have.length(2);
+      send('n2', 'msg', 'A', 2);
+      receivedMessages.should.have.length(1);
 
-      send('n2', 'msg', 'C', { seq: 6, next: 7});
-      receivedMessages.should.have.length(2);
-
-      send('n1', 'msg', 'b', { seq: 1, next: 2});
+      send('n1', 'msg', 'b', 1);
       receivedMessages.should.have.length(3);
 
-      send('n2', 'msg', 'B', { seq: 5, next: 6});
+      send('n2', 'msg', 'C', 4);
+      receivedMessages.should.have.length(3);
+
+      send('n2', 'msg', 'B', 3);
       receivedMessages.should.have.length(5);
 
-      [['n1', 'a'], ['n2', 'A'], ['n1', 'b'], ['n2', 'B'], ['n2', 'C']].forEach(function (testData, i) {
+      [['n1', 'a'], ['n1', 'b'], ['n2', 'A'], ['n2', 'B'], ['n2', 'C']].forEach(function (testData, i) {
         receivedMessages[i][0].should.equal(testData[0]);
         receivedMessages[i][2].should.equal(testData[1]);
       });
     });
 
     it('should deliver in order when both nodes are out of order', function () {
-      send('n1', 'msg', 'a', { seq: 0, next: 1});
+      send('n1', 'msg', 'a', 0);
       receivedMessages.should.have.length(1);
 
-      send('n2', 'msg', 'A', { seq: 4, next: 5});
-      receivedMessages.should.have.length(2);
+      send('n2', 'msg', 'A', 3);
+      receivedMessages.should.have.length(1);
 
-      send('n2', 'msg', 'C', { seq: 6, next: 7});
-      receivedMessages.should.have.length(2);
+      send('n2', 'msg', 'C', 5);
+      receivedMessages.should.have.length(1);
 
-      send('n1', 'msg', 'c', { seq: 2, next: 3});
-      receivedMessages.should.have.length(2);
+      send('n1', 'msg', 'c', 2);
+      receivedMessages.should.have.length(1);
 
-      send('n2', 'msg', 'B', { seq: 5, next: 6});
-      receivedMessages.should.have.length(4);
+      send('n2', 'msg', 'B', 4);
+      receivedMessages.should.have.length(1);
 
-      send('n1', 'msg', 'b', { seq: 1, next: 2});
+      send('n1', 'msg', 'b', 1);
       receivedMessages.should.have.length(6);
 
-      [['n1', 'a'], ['n2', 'A'], ['n2', 'B'], ['n2', 'C'], ['n1', 'b'], ['n1', 'c']].forEach(function (testData, i) {
+      [['n1', 'a'], ['n1', 'b'], ['n1', 'c'], ['n2', 'A'], ['n2', 'B'], ['n2', 'C']].forEach(function (testData, i) {
         receivedMessages[i][0].should.equal(testData[0]);
         receivedMessages[i][2].should.equal(testData[1]);
       });

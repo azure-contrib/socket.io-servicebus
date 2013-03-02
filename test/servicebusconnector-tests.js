@@ -80,23 +80,13 @@ describe('Service Bus connection layer', function () {
       unpacked.args.b.should.equal(5); 
     });
 
-    it('should store metadata as custom properties in message', function () {
-      var packed = connector.packMessage('msg', 'hello', { seq: 1, next: 2, other: 'something'});
-
-      should.exist(packed.customProperties);
-      packed.customProperties.seq.should.equal(1);
-      packed.customProperties.next.should.equal(2);
-      packed.customProperties.other.should.equal('something');
-    });
-
-    it('should round trip metadata through unpack', function () {
-      var packed = connector.packMessage('msg', 'hello', { seq: 1, next: 2, other: 'something'});
+    it('should pull sequence number from broker properties', function () {
+      var packed = connector.packMessage('msg', 'world');
+      packed.brokerProperties.SequenceNumber = 53;
       var unpacked = connector.unpackMessage(packed);
 
-      should.exist(unpacked.metadata);
-      unpacked.metadata.seq.should.equal(1);
-      unpacked.metadata.next.should.equal(2);
-      unpacked.metadata.other.should.equal('something');
+      should.exist(unpacked.seq);
+      unpacked.seq.should.equal(53);
     });
   });
 
@@ -117,14 +107,12 @@ describe('Service Bus connection layer', function () {
       sb.sendTopicMessage.calledOnce.should.be.true;
     });
 
-    it('should pack message that was sent, including metadata', function () {
-      connector.send('msg', 'hello', {seq: 6, next: 7});
+    it('should pack message that was sent', function () {
+      connector.send('msg', 'hello');
 
       var sentMessage = sb.sendTopicMessage.firstCall.args[1];
 
       sentMessage.body.should.equal('"hello"');
-      sentMessage.customProperties.seq.should.equal(6);
-      sentMessage.customProperties.next.should.equal(7);
     });
 
     it('should emit sberror event if service bus send fails', function () {
@@ -190,15 +178,6 @@ describe('Service Bus connection layer', function () {
         args[0].should.equal(3);
         args[1].should.equal(1);
         args[2].should.equal(4);
-        done();
-      });
-
-      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], {seq: 8, next: 11}));
-    });
-    it('should pass message metadata from received message', function (done) {
-      connector.on('message', function (nodeId, name, args, metadata) { 
-        metadata.seq.should.equal(8);
-        metadata.next.should.equal(11);
         done();
       });
 
