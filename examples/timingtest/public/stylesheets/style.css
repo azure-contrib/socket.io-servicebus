@@ -1,0 +1,16 @@
+body {
+    padding-top: 60px;
+}
+
+.navbar-inverse .navbar-inner {
+    background-color: #049cdb;
+    background-image: none;
+}
+
+.navbar-inverse .nav > li > a {
+    color: #FFFFFF;
+}
+
+.navbar-inverse .brand {
+    color: white;
+}

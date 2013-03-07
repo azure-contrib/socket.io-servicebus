@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  include navbar
+
+  .container
+    h1 Stress Test
+    p
+      | This app generates traffic for socket.io. Please select
+      | the links in the nav bar above to create a sender or receiver.
+    p
+    span#server
+
+block scripts
+  script.
+    $('#server').text('This client is connected to ' + location.href);
