@@ -1,0 +1,16 @@
+doctype 5
+html
+  head
+    title= title
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    link(rel='stylesheet', href='/bootstrap/css/bootstrap.css', media='screen')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+
+    block content
+    script(src='http://code.jquery.com/jquery.js')
+    script(src='/bootstrap/js/bootstrap.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='/javascripts/underscore-min.js')
+    script $('.nav li a[href="' + location.pathname + '"]').parent().addClass('active')
+    block scripts

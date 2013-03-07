@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  include navbar
+
+  .container
+    h1 Data Receiver
+
+    #waiting
+      h3 Waiting for perf session to start
+    #running
+      h3 Receiving test messages
+      p Run name: 
+        span.runName
+      p Bytes per message: 
+        span.messageSize
+      p Messages per interval: 
+        span.messagesPerBlock
+      p Send interval: 
+        span.sendIntervalMS
+        |  milliseconds
+      p Total time: 
+        span.totalRunTimeMS
+        |  milliseconds
+    #summary
+      h3 Test run 
+        span.runName
+        |  complete
+      p Test run took 
+        span#elapsed elapsed-time-here
+        span  seconds.
+      p  
+        span#totalmessages total-messages-here
+        span  messages have been received
+
+      p The average receive throughput is 
+        span#throughput
+        span  messages per second
+    
+block scripts
+  script(src='/javascripts/receiver.js')

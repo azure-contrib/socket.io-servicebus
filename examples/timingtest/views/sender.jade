@@ -1,0 +1,26 @@
+extends layout
+
+block content
+  include navbar
+
+  .container
+    h1 Data Sender
+    form#senderSettings
+      fieldest
+        label(for='runName') Name of this run
+        input#runName(type='text')
+        label(for='messageSize') Size of each message in bytes
+        input#messageSize(type='text')
+        label(for='messagesPerBlock') Number of messages per send block
+        input#messagesPerBlock(type='text')
+        label(for='sendInterval') Send interval in MS
+        input#sendInterval(type='text')
+        span.help-block How long to wait between sending each block of messages
+        label(for='totalTestTime') Total time to run tests in S
+        input#totalTestTime(type='text')
+        span.help-block How long to send total
+
+        button#startTest Start the tests
+
+block scripts
+    script(src='/javascripts/sender.js')
