@@ -208,6 +208,16 @@ describe('Service Bus connection layer', function () {
       sb.receiveSubscriptionMessage.calledTwice.should.be.true;
       done();
     });
+
+    it('should not raise event and repoll on undeserializable message', function (done) {
+      connector.on('message', function (nodeId, name, args, seq) {
+        done(new Error('Message received when deserialization fails. This should not happen.'));
+      });
+
+      receive(null, 'This is not valid JSON');
+      sb.receiveSubscriptionMessage.calledTwice.should.be.true;
+      done();
+    });
   });
 
   describe('when receiving with multiple receives at a time', function () {
