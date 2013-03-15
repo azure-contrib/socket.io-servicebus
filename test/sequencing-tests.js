@@ -40,6 +40,7 @@ describe('Message sequencing layer', function () {
 
     it('should register for message events from inner', function() {
       innerInterface.on.calledWith('message').should.be.true;
+      innerInterface.on.calledWith('badmessage').should.be.true;
     });
 
     it('should start inner interface when started', function () {
@@ -86,7 +87,9 @@ describe('Message sequencing layer', function () {
     beforeEach(function () {
       innerInterface = {
         on: function (msg, callback) {
-          receiveFunc = callback;
+          if (msg === 'message') {
+            receiveFunc = callback;
+          }
         },
         send: noop
       };
@@ -121,7 +124,9 @@ describe('Message sequencing layer', function () {
     beforeEach(function () {
       innerInterface = {
         on: function (msg, callback) {
-          send = callback;
+          if (msg === 'message') {
+            send = callback;
+          }
         },
         start: noop,
         send: noop
@@ -199,7 +204,9 @@ describe('Message sequencing layer', function () {
     beforeEach(function () {
       innerInterface = {
         on: function (msg, callback) {
-          send = callback;
+          if (msg === 'message') {
+            send = callback;
+          }
         },
         start: noop,
         send: noop
@@ -274,6 +281,73 @@ describe('Message sequencing layer', function () {
         receivedMessages[i][0].should.equal(testData[0]);
         receivedMessages[i][2].should.equal(testData[1]);
       });
+
+    });
+  });
+
+  describe('when receiving a bad message', function () {
+    var innerInterface;
+    var sequencer;
+    var sendMessage;
+    var sendBadMessage;
+    var receivedMessages;
+    var badMessages;
+    beforeEach(function () {
+      innerInterface = {
+        on: function (msg, callback) {
+          if (msg === 'message') {
+            sendMessage = callback;
+          }
+          if (msg === 'badmessage') {
+            sendBadMessage = callback;
+          }
+        },
+        start: noop,
+        send: noop
+      };
+
+      sequencer = new MessageSequencer(createOptions, innerInterface);
+      receivedMessages = [];
+      sequencer.on('message', function (sourceNodeId, msg, args, seq) {
+        receivedMessages.push([sourceNodeId, msg, args, seq]);
+      });
+    });
+
+    it('should drop skip bad messages', function () {
+      sendBadMessage('n1', 'badMessage', 1);
+      sendBadMessage('n2', 'badMessage', 2);
+
+      receivedMessages.should.have.length(0);
+    });
+
+    it('should ignore bad message in middle of good messages', function () {
+      sendMessage('n1', 'goodMessage', 'Hello', 0);
+      sendBadMessage('n1', 'badMessage', 1);
+      sendMessage('n1', 'goodMessage', 'world', 2);
+
+      receivedMessages.should.have.length(2);
+      [['n1', 'Hello', 0], ['n1', 'world', 2]].forEach(function (testData, i) {
+        receivedMessages[i][0].should.equal(testData[0]);
+        receivedMessages[i][2].should.equal(testData[1]);
+        receivedMessages[i][3].should.equal(testData[2]);
+      });
+    });
+
+    it('should ignore bad message in out of sequence messages', function () {
+      sendMessage('n1', 'msg', '0', 0);
+      sendMessage('n1', 'msg', '4', 4);
+      sendBadMessage('n1', 'msg', 1);
+      sendMessage('n1', 'msg', '2', 2);
+      sendBadMessage('n1', 'msg', 3);
+
+
+      receivedMessages.should.have.length(3);
+      [['n1', '0', 0], ['n1', '2', 2], ['n1', '4', 4]].forEach(function (testData, i) {
+        receivedMessages[i][0].should.equal(testData[0]);
+        receivedMessages[i][2].should.equal(testData[1]);
+        receivedMessages[i][3].should.equal(testData[2]);
+      });
+
 
     });
   });
