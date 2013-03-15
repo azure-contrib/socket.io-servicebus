@@ -209,14 +209,30 @@ describe('Service Bus connection layer', function () {
       done();
     });
 
-    it('should not raise event and repoll on undeserializable message', function (done) {
+    it('should not raise message event and repoll on undeserializable message', function (done) {
       connector.on('message', function (nodeId, name, args, seq) {
         done(new Error('Message received when deserialization fails. This should not happen.'));
       });
 
-      receive(null, 'This is not valid JSON');
+      var msg = packMessage(connector, 'anotherNode', 'aMessage', null, 12);
+      msg.body = 'This is not valid JSON';
+      receive(null, msg);
       sb.receiveSubscriptionMessage.calledTwice.should.be.true;
       done();
+    });
+
+    it('should raise badmessage event on undeserializable message', function (done) {
+      connector.on('badmessage', function (nodeId, name, seq) {
+        nodeId.should.equal('anotherNode');
+        name.should.equal('aMessage');
+        seq.should.equal(12);
+        done();
+      });
+
+      var msg = packMessage(connector, 'anotherNode', 'aMessage', null, 12);
+      msg.body = 'This is not valid JSON';
+      receive(null, msg);
+      sb.receiveSubscriptionMessage.calledTwice.should.be.true;      
     });
   });
 
