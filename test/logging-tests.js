@@ -25,8 +25,10 @@ describe('logging', function () {
   var logger;
   var serviceBusService;
   var recvFuncs;
+  var clock;
 
   beforeEach(function () {
+    clock = sinon.useFakeTimers();
     recvFuncs = [];
 
     serviceBusService = {
@@ -51,8 +53,13 @@ describe('logging', function () {
       subscription: 'testsubscription',
       serviceBusService: serviceBusService,
       numReceives: 2,
-      logger: logger
+      logger: logger,
+      flushIntervalMS: 100
     });
+  });
+
+  afterEach(function () {
+    clock.restore();
   });
 
   it('should log subscription info on creation', function () {
@@ -135,6 +142,18 @@ describe('logging', function () {
       'size:' + message.brokerProperties.Size,
       'enqueuedTime:' + message.brokerProperties.EnqueuedTimeUtc,
       'messageId:' + message.brokerProperties.MessageId).should.be.true;
+  });
+
+  it('should log failure to send', function () {
+    store.publish('aMessage', 1, 2, 3);
+    // message batcher flush 
+    clock.tick(300);
+
+    var sendCallback = serviceBusService.sendTopicMessage.getCall(0).args[2];
+    sendCallback('Service Bus send failed');
+
+    logger.error.calledWith('Service Bus send to topic failed',
+      'topic:testtopic', 'error:Service Bus send failed').should.be.true;
   });
 
   // Helpers for sending messages
