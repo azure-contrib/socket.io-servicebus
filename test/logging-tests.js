@@ -100,6 +100,22 @@ describe('logging', function () {
       .should.be.true;
   });
 
+  it('should log when good message is received', function () {
+    var message = {
+      brokerProperties: {
+        CorrelationId: 'sourceNode',
+        Label: 'aMessage',
+        SequenceNumber: 2
+      },
+      body: JSON.stringify([1, 2, 3])
+    };
+
+    recv(message);
+
+    logger.info.calledWith('Service Bus received message',
+      'from:sourceNode', 'message:aMessage').should.be.true;
+  });
+  
   // Helpers for sending messages
   function recvNothing() {
     var recvFunc = recvFuncs.shift();
