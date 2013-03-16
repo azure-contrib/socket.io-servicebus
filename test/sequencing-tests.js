@@ -340,15 +340,12 @@ describe('Message sequencing layer', function () {
       sendMessage('n1', 'msg', '2', 2);
       sendBadMessage('n1', 'msg', 3);
 
-
       receivedMessages.should.have.length(3);
       [['n1', '0', 0], ['n1', '2', 2], ['n1', '4', 4]].forEach(function (testData, i) {
         receivedMessages[i][0].should.equal(testData[0]);
         receivedMessages[i][2].should.equal(testData[1]);
         receivedMessages[i][3].should.equal(testData[2]);
       });
-
-
     });
   });
 
@@ -358,10 +355,10 @@ describe('Message sequencing layer', function () {
 
     beforeEach(function () {
       innerInterface = {
-          on: noop,
-          start: sinon.spy(),
-          stop: sinon.spy(),
-        };
+        on: noop,
+        start: sinon.spy(),
+        stop: sinon.spy(),
+      };
 
       sequencer = new MessageSequencer(createOptions, innerInterface);
     });
