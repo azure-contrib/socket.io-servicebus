@@ -79,6 +79,11 @@ describe('logging', function () {
     recvNothing();
   });
 
+  it('should log when poll completes without a message', function () {
+    recvNothing();
+    logger.debug.calledWith('Service Bus poll: no message').should.be.true;
+  });
+
   // Helpers for sending messages
   function recvNothing() {
     var recvFunc = recvFuncs.shift();
