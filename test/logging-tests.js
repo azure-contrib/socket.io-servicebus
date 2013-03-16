@@ -115,7 +115,28 @@ describe('logging', function () {
     logger.info.calledWith('Service Bus received message',
       'from:sourceNode', 'message:aMessage').should.be.true;
   });
-  
+
+  it('should log details when good message is received', function () {
+    var message = {
+      brokerProperties: {
+        CorrelationId: 'sourceNode',
+        Label: 'aMessage',
+        SequenceNumber: 2,
+        EnqueuedTimeUtc: new Date().toString(),
+        MessageId: 1234
+      },
+      body: JSON.stringify([1, 2, 3])
+    };
+    message.brokerProperties.Size = message.body.length;
+
+    recv(message);
+
+    logger.debug.calledWith('Service Bus received message',
+      'size:' + message.brokerProperties.Size,
+      'enqueuedTime:' + message.brokerProperties.EnqueuedTimeUtc,
+      'messageId:' + message.brokerProperties.MessageId).should.be.true;
+  });
+
   // Helpers for sending messages
   function recvNothing() {
     var recvFunc = recvFuncs.shift();
