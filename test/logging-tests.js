@@ -84,9 +84,31 @@ describe('logging', function () {
     logger.debug.calledWith('Service Bus poll: no message').should.be.true;
   });
 
+  it('should log when a bad message is received', function () {
+    var message = {
+      brokerProperties: {
+        CorrelationId: 'sourceNode',
+        Label: 'aMessage',
+        SequenceNumber: 1
+      },
+      body: 'This will not deserialize'
+    };
+
+    recv(message);
+    logger.warn.calledWith('Service Bus bad message received', 
+      'CorrelationId:sourceNode', 'Label:aMessage', 'SequenceNumber:1')
+      .should.be.true;
+  });
+
   // Helpers for sending messages
   function recvNothing() {
     var recvFunc = recvFuncs.shift();
     recvFunc('No messages to receive');
   }
+
+  function recv(message) {
+    var recvFunc = recvFuncs.shift();
+    recvFunc(null, message);
+  }
+
 });
