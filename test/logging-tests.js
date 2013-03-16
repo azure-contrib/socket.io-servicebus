@@ -45,14 +45,20 @@ describe('logging', function () {
       topic: 'testtopic',
       subscription: 'testsubscription',
       serviceBusService: serviceBusService,
+      numReceives: 2,
       logger: logger
     });
   });
 
-  it('should log subscription info on startup', function () {
+  it('should log subscription info on creation', function () {
     logger.info.calledWith('Service Bus Store created', 
       'host:' + serviceBusService.host,
       'topic:testtopic', 
       'sub:testsubscription').should.be.true;
+  });
+
+  it('should log when poll request starts up', function () {
+    logger.info.calledWith('Service Bus poll started', 'num:0').should.be.true;
+    logger.info.calledWith('Service Bus poll started', 'num:1').should.be.true;
   });
 });
