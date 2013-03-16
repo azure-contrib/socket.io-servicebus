@@ -151,7 +151,7 @@ describe('Service Bus connection layer', function () {
         done();
       });
 
-      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], {seq: 8, next: 11}));
+      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], 8));
     });
 
     it('should pass nodeId from received message', function (done) {
@@ -160,7 +160,7 @@ describe('Service Bus connection layer', function () {
         done();
       });
 
-      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], {seq: 8, next: 11}));
+      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], 8));
     });
 
     it('should pass message name from received message', function (done) {
@@ -169,7 +169,7 @@ describe('Service Bus connection layer', function () {
         done();
       });
 
-      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], {seq: 8, next: 11}));
+      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], 8));
     });
 
     it('should pass message arguments from received message', function (done) {
@@ -181,23 +181,58 @@ describe('Service Bus connection layer', function () {
         done();
       });
 
-      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], {seq: 8, next: 11}));
+      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], 8));
+    });
+
+    it('should pass sequence number from message properties', function(done) {
+      connector.on('message', function (nodeId, name, args, seq) {
+        seq.should.equal(7);
+        done();
+      });
+
+      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [1, 5, 9], 7));
     });
 
     it('should repoll service bus after message is received', function () {
-      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], {seq: 8, next: 11}));
+      receive(null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], 8));
 
       sb.receiveSubscriptionMessage.calledTwice.should.be.true;
     });
 
     it('should not raise event and repoll on receive error', function (done) {
-      connector.on('message', function (nodeId, name, args, metadata) {
+      connector.on('message', function (nodeId, name, args, seq) {
         done(new Error('Should not be called')); 
       });
 
       receive(new Error('Fake error'), null);
       sb.receiveSubscriptionMessage.calledTwice.should.be.true;
       done();
+    });
+
+    it('should not raise message event and repoll on undeserializable message', function (done) {
+      connector.on('message', function (nodeId, name, args, seq) {
+        done(new Error('Message received when deserialization fails. This should not happen.'));
+      });
+
+      var msg = packMessage(connector, 'anotherNode', 'aMessage', null, 12);
+      msg.body = 'This is not valid JSON';
+      receive(null, msg);
+      sb.receiveSubscriptionMessage.calledTwice.should.be.true;
+      done();
+    });
+
+    it('should raise badmessage event on undeserializable message', function (done) {
+      connector.on('badmessage', function (nodeId, name, seq) {
+        nodeId.should.equal('anotherNode');
+        name.should.equal('aMessage');
+        seq.should.equal(12);
+        done();
+      });
+
+      var msg = packMessage(connector, 'anotherNode', 'aMessage', null, 12);
+      msg.body = 'This is not valid JSON';
+      receive(null, msg);
+      sb.receiveSubscriptionMessage.calledTwice.should.be.true;      
     });
   });
 
@@ -229,17 +264,17 @@ describe('Service Bus connection layer', function () {
     });
 
     it('should raise message event when message is received', function (done) {
-      connector.on('message', function (nodeId, name, args, metadata) {
+      connector.on('message', function (nodeId, name, args, seq) {
         done();
       });
 
-      receive[0](null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], {seq: 8, next: 11}));
+      receive[0](null, packMessage(connector, 'anotherNode', 'aMessage', [1, 2, 3], 8));
       receive.shift();
     });
 
     it('should repoll service bus after message is received', function () {
       var originalCalls = sb.receiveSubscriptionMessage.callCount;
-      receive[0](null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], {seq: 8, next: 11}));
+      receive[0](null, packMessage(connector, 'anotherNode', 'aMessage', [3, 1, 4], 8));
       receive.shift();
 
       sb.receiveSubscriptionMessage.callCount.should.equal(originalCalls + 1);
@@ -247,7 +282,7 @@ describe('Service Bus connection layer', function () {
 
     it('should not raise event and repoll on receive error', function (done) {
       var originalCalls = sb.receiveSubscriptionMessage.callCount;
-      connector.on('message', function (nodeId, name, args, metadata) {
+      connector.on('message', function (nodeId, name, args, seq) {
         done(new Error('Should not be called')); 
       });
 
@@ -333,8 +368,9 @@ function makeConnector(serviceBus, callback) {
   callback(serviceBus, connector);
 }
 
-function packMessage(connector, sourceNode, message, args, metadata) {
-  var packed = connector.packMessage(message, args, metadata);
+function packMessage(connector, sourceNode, message, args, sequenceNumber) {
+  var packed = connector.packMessage(message, args);
   packed.brokerProperties.CorrelationId = sourceNode;
+  packed.brokerProperties.SequenceNumber = sequenceNumber;
   return packed;
 }
