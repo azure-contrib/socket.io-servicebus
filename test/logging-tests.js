@@ -24,10 +24,15 @@ describe('logging', function () {
   var store;
   var logger;
   var serviceBusService;
+  var recvFuncs;
 
   beforeEach(function () {
+    recvFuncs = [];
+
     serviceBusService = {
-      receiveSubscriptionMessage: sinon.spy(),
+      receiveSubscriptionMessage: function (topic, sub, callback) {
+        recvFuncs.push(callback);
+      },
       sendTopicMessage: sinon.spy(),
       withFilter: function (filter) { return this; },
       host: 'testnamespace.servicebus.example'
@@ -61,4 +66,22 @@ describe('logging', function () {
     logger.info.calledWith('Service Bus poll started', 'num:0').should.be.true;
     logger.info.calledWith('Service Bus poll started', 'num:1').should.be.true;
   });
+
+  it('should log when polling stops', function (done) {
+    store.destroy(function () {
+      logger.info.calledWith('Service Bus poll stopped', 'num:1').should.be.true;
+      logger.info.calledWith('Service Bus poll stopped', 'num:0').should.be.true;
+      done();
+    });
+
+    // trigger the receive poll callbacks so they exit
+    recvNothing();
+    recvNothing();
+  });
+
+  // Helpers for sending messages
+  function recvNothing() {
+    var recvFunc = recvFuncs.shift();
+    recvFunc('No messages to receive');
+  }
 });
