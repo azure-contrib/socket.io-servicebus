@@ -139,8 +139,6 @@ describe('logging', function () {
     recv(message);
 
     logger.debug.calledWith('Service Bus received message',
-      'size:' + message.brokerProperties.Size,
-      'enqueuedTime:' + message.brokerProperties.EnqueuedTimeUtc,
       'messageId:' + message.brokerProperties.MessageId).should.be.true;
   });
 
