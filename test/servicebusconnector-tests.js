@@ -114,16 +114,6 @@ describe('Service Bus connection layer', function () {
 
       sentMessage.body.should.equal('"hello"');
     });
-
-    it('should emit sberror event if service bus send fails', function () {
-      var stub = sinon.stub().callsArgWith(2, new Error('Fake failure'));
-      sb.sendTopicMessage = stub;
-      var error = null;
-      connector.on('sberror', function (err) { console.log('there was an error'); error = err; })
-      connector.send('msg', 'hello', {seq: 6, next: 7});
-
-      error.should.exist;
-    });
   });
 
   describe('when receiving with one receive at a time', function () {

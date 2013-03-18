@@ -79,7 +79,7 @@ io.configure(function () {
     topic: topic,
     subscription: subscription,
     connectionString: sbconn,
-    listeners: SbStore.logging.console
+    logger: io.get('logger')
   }));
 
   io.set('transports', ['xhr-polling']);
