@@ -54,6 +54,14 @@ describe('Service Bus connection layer', function () {
       });
     });
 
+    it('should attempt to create a topic', function (done) {
+      connector.start(function () {
+        serviceBusService.createTopic.calledOnce.should.be.true;
+        serviceBusService.createTopic.firstCall.args[0].should.equal(topicName);
+        done();
+      });
+    });
+
     describe('and subscription already exists', function () {
       var errDetails = {
         code: '409',
@@ -203,7 +211,8 @@ describe('Service Bus connection layer', function () {
           receive = callback;
         }),
         createSubscription: sinon.stub().callsArgAsync(3),
-        withFilter: sinon.spy()
+        createTopic: sinon.stub().callsArgAsync(2),
+        withFilter: function () { return this; }
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
@@ -316,7 +325,8 @@ describe('Service Bus connection layer', function () {
           receive.push(callback);
         }),
         createSubscription: sinon.stub().callsArgAsync(3),
-        withFilter: sinon.spy()
+        createTopic: sinon.stub().callsArgAsync(2),
+        withFilter: function () { return this; }
       };
 
       connector = new ServiceBusConnector({
@@ -384,7 +394,8 @@ describe('Service Bus connection layer', function () {
           receive = callback;
         }),
         createSubscription: sinon.stub().callsArgAsync(3),
-        withFilter: sinon.spy()
+        createTopic: sinon.stub().callsArgAsync(2),
+        withFilter: function () { return this; }
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
@@ -421,6 +432,7 @@ function makeConnectorWithMockSB(callback) {
     receiveSubscriptionMessage: sinon.spy(),
     sendTopicMessage: sinon.spy(),
     createSubscription: sinon.stub().callsArgAsync(3),
+    createTopic: sinon.stub().callsArgAsync(2),
     withFilter: function (filter) { return this; }
   };
   makeConnector(sb, callback);
