@@ -124,6 +124,43 @@ describe('Service Bus connection layer', function () {
         });
       });
     });
+
+    describe('and the topic already exists', function () {
+      var errDetails = {
+        code: '409',
+        detail: 'The topic already exists'
+      };
+
+      beforeEach(function () {
+        serviceBusService.createTopic = function (topic, options, callback) {
+          process.nextTick(function () {
+            var errTopicAlreadyExists = new Error(util.format('Error: %s - %s', errDetails.code, errDetails.detail));
+            errTopicAlreadyExists.code = errDetails.code;
+            errTopicAlreadyExists.detail = errDetails.detail;
+
+            var responseTopicAlreadyExists = {
+              isSuccessful: false,
+              statusCode: 409
+            };
+            callback(errTopicAlreadyExists, null, responseTopicAlreadyExists);
+          });
+        }
+      });
+
+      it('should start up if topic already exists', function (done) {
+        connector.start(function (err) {
+          should.not.exist(err);
+          done();
+        });
+      });
+
+      it('should create subscription', function (done) {
+        connector.start(function (err) {
+          serviceBusService.createSubscription.calledOnce.should.be.true;
+          done();
+        });
+      });
+    });
   });
 
   describe('when packing messages to send', function () {
