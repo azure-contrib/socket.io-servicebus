@@ -43,6 +43,29 @@ describe('Service Bus connection layer', function () {
     });
   });
 
+  describe('when created without a subscription id', function () {
+    var connector;
+    var serviceBusService;
+
+    beforeEach(function () {
+      serviceBusService = {
+        sendTopicMessage: sinon.spy(),
+        receiveSubscriptionMessage: sinon.spy(),
+        createSubscription: sinon.spy(),
+        withFilter: function () { return this; }
+      };
+
+      makeConnector(serviceBusService, function (_, c) {
+        connector = c;
+      });
+      connector.start();
+    });
+
+    it('should attempt to create a subscription', function () {
+      serviceBusService.createSubscription.calledOnce.should.be.true;
+    });
+  });
+
   describe('when packing messages to send', function () {
     var connector;
     var serviceBusService;
@@ -127,6 +150,7 @@ describe('Service Bus connection layer', function () {
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
         }),
+        createSubscription: function (topic, sub, opts, cb) { cb(); },
         withFilter: sinon.spy()
       };
 
@@ -239,6 +263,7 @@ describe('Service Bus connection layer', function () {
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive.push(callback);
         }),
+        createSubscription: function (topic, sub, opts, cb) { cb(); },
         withFilter: sinon.spy()
       };
 
@@ -306,6 +331,7 @@ describe('Service Bus connection layer', function () {
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
         }),
+        createSubscription: function (topic, sub, opts, cb) { cb(); },
         withFilter: sinon.spy()
       };
 
@@ -341,12 +367,24 @@ function makeConnectorWithMockSB(callback) {
   var sb = {
     receiveSubscriptionMessage: sinon.spy(),
     sendTopicMessage: sinon.spy(),
+    createSubscription: function (topic, sub, opts, cb) { cb(); },
     withFilter: function (filter) { return this; }
   };
   makeConnector(sb, callback);
 }
 
-function makeConnector(serviceBus, callback) {
+function makeConnectorWithOptions(serviceBus, options, callback) {
+  options.nodeId = options.nodeId || nodeId;
+  options.topicName = options.topicName || topicName;
+  options.serviceBusService = serviceBus;
+  options.numReceives = 1;
+
+  var connector = new ServiceBusConnector(options);
+  callback(serviceBus, connector);
+
+}
+
+function makeConnectorNoOptions(serviceBus, callback) {
   var connector = new ServiceBusConnector({
     nodeId: nodeId,
     topic: topicName,
@@ -356,6 +394,16 @@ function makeConnector(serviceBus, callback) {
   });
 
   callback(serviceBus, connector);
+}
+
+function makeConnector() {
+  if (arguments.length === 2) {
+    makeConnectorNoOptions.apply(null, arguments);
+  } else if (arguments.length === 3) {
+    makeConnectorWithOptions.apply(null, arguments);
+  } else {
+    throw new Error('Unknown makeConnector overload with ' + arguments.length + ' arguments');
+  }
 }
 
 function packMessage(connector, sourceNode, message, args, sequenceNumber) {
