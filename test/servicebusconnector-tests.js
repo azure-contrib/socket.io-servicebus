@@ -16,7 +16,8 @@
 'use strict';
 
 var should = require('should')
-  , sinon = require('sinon');
+  , sinon = require('sinon')
+  , util = require('util');
 
 var ServiceBusConnector = require('../lib/servicebusconnector');
 
@@ -54,7 +55,33 @@ describe('Service Bus connection layer', function () {
     });
 
     describe('and subscription already exists', function () {
+      var errDetails = {
+        code: '409',
+        detail: 'Entity \'namespace:topic|subscription\' already exists.'
+      };
 
+
+      beforeEach(function () {
+        serviceBusService.createSubscription = function (topic, sub, options, callback) {
+          process.nextTick(function () {
+            var errSubscriptionAlreadyExists = new Error(util.format('Error: %s - %s', errDetails.code, errDetails.detail));
+            errSubscriptionAlreadyExists.code = errDetails.code;
+            errSubscriptionAlreadyExists.detail = errDetails.detail;
+
+            var responseSubscriptionAlreadyExists = {
+              isSuccessful: false,
+              statusCode: 409
+            };
+            callback(errSubscriptionAlreadyExists, null, responseSubscriptionAlreadyExists);
+          });
+        }
+      });
+
+      it('should start up if subscription already exists', function (done) {
+        connector.start(function () {
+          done();
+        });
+      });
     });
   });
 
