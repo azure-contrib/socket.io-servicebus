@@ -30,41 +30,31 @@ describe('Service Bus connection layer', function () {
     var connector;
     var serviceBusService;
 
-    beforeEach(function (done) {
+    beforeEach(function () {
       makeConnectorWithMockSB(function (sb, c) {
         serviceBusService = sb;
         connector = c;
       });
-      connector.start(done);
     });
 
-    it('should start polling service bus', function () {
-      serviceBusService.receiveSubscriptionMessage.calledOnce.should.be.true;
-    });
-  });
-
-  describe('when created without a subscription id', function () {
-    var connector;
-    var serviceBusService;
-
-    beforeEach(function (done) {
-      serviceBusService = {
-        sendTopicMessage: sinon.spy(),
-        receiveSubscriptionMessage: sinon.spy(),
-        createSubscription: sinon.stub().callsArgAsync(3),
-        withFilter: function () { return this; }
-      };
-
-      makeConnector(serviceBusService, function (_, c) {
-        connector = c;
+    it('should start polling service bus', function (done) {
+      connector.start(function () {
+        serviceBusService.receiveSubscriptionMessage.calledOnce.should.be.true;
+        done();
       });
-      connector.start(done);
     });
 
-    it('should attempt to create a subscription', function () {
-      serviceBusService.createSubscription.calledOnce.should.be.true;
-      serviceBusService.createSubscription.firstCall.args[0].should.equal(topicName);
-      serviceBusService.createSubscription.firstCall.args[1].should.equal(subscriptionName);
+    it('should attempt to create a subscription', function (done) {
+      connector.start(function () {
+        serviceBusService.createSubscription.calledOnce.should.be.true;
+        serviceBusService.createSubscription.firstCall.args[0].should.equal(topicName);
+        serviceBusService.createSubscription.firstCall.args[1].should.equal(subscriptionName);
+        done();
+      });
+    });
+
+    describe('and subscription already exists', function () {
+
     });
   });
 
@@ -369,7 +359,7 @@ function makeConnectorWithMockSB(callback) {
   var sb = {
     receiveSubscriptionMessage: sinon.spy(),
     sendTopicMessage: sinon.spy(),
-    createSubscription: function (topic, sub, opts, cb) { cb(); },
+    createSubscription: sinon.stub().callsArgAsync(3),
     withFilter: function (filter) { return this; }
   };
   makeConnector(sb, callback);
