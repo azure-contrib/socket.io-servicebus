@@ -22,12 +22,13 @@ var io = require('socket.io')
 
 describe('Service Bus Store objects', function() {
   var sandbox;
+  var startupErr;
 
   before(function () {
     sandbox = sinon.sandbox.create();
     sandbox.stub(SbStore.prototype, 'createServiceBusConnector', function (options) {
       return {
-        start: sandbox.stub(),
+        start: sandbox.stub().callsArgWithAsync(0, startupErr),
         send: sandbox.stub(),
         on: sandbox.stub()
       }
@@ -40,24 +41,55 @@ describe('Service Bus Store objects', function() {
 
   describe('when creating', function () {
     var store;
-    var listener = { 
-      store: sinon.spy(),
-      sb: sinon.spy()
-    };
-
-    before(function () {
-      store = new SbStore({ listeners: [listener]});
+    var startCallback = sinon.spy();
+    before(function (done) {
+      store = new SbStore();
+      store.on('started', function (err) {
+        startCallback(err);
+        done();
+      });
     });
 
     it('should start the service bus polling', function () {
       store.sb.start.called.should.be.true;
     });
 
-    it('should hook up listeners', function () {
-      listener.store.calledOnce.should.be.true;
-      listener.store.getCall(0).calledWithExactly(store).should.be.true;
-      listener.sb.calledOnce.should.be.true;
-      listener.sb.getCall(0).calledWithExactly(store.sb).should.be.true;
+    it('should invoke the start callback', function () {
+      startCallback.calledOnce.should.be.true;
+      should.not.exist(startCallback.firstCall.args[0]);
+    });
+  });
+
+  describe('when creating and there is a startup error', function () {
+    var store;
+    var startCallback = sinon.spy();
+    var errCode = '500';
+    var errDetail = 'Internal Server Error';
+
+    beforeEach(function (done) {
+      startupErr = new Error('Error: 500 - Internal Server Error');
+      startupErr.code = errCode;
+      startupErr.detail = errDetail;
+
+      store = new SbStore();
+      store.on('started', function (err) {
+        startCallback(err);
+        done();
+      });
+    });
+
+    afterEach(function () {
+      startupErr = undefined;
+    });
+
+    it('should emit the started event', function () {
+      startCallback.calledOnce.should.be.true;
+    });
+
+    it('should pass error info to the event', function () {
+      startCallback.firstCall.args[0].should.exist;
+      startCallback.firstCall.args[0].code.should.equal(errCode);
+      startCallback.firstCall.args[0].detail.should.equal(errDetail);
     });
   });
 

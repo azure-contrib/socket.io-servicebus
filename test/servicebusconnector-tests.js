@@ -16,7 +16,8 @@
 'use strict';
 
 var should = require('should')
-  , sinon = require('sinon');
+  , sinon = require('sinon')
+  , util = require('util');
 
 var ServiceBusConnector = require('../lib/servicebusconnector');
 
@@ -35,11 +36,85 @@ describe('Service Bus connection layer', function () {
         serviceBusService = sb;
         connector = c;
       });
-      connector.start();
     });
 
-    it('should start polling service bus', function () {
-      serviceBusService.receiveSubscriptionMessage.calledOnce.should.be.true;
+    it('should start polling service bus', function (done) {
+      connector.start(function () {
+        serviceBusService.receiveSubscriptionMessage.calledOnce.should.be.true;
+        done();
+      });
+    });
+
+    it('should attempt to create a subscription', function (done) {
+      connector.start(function () {
+        serviceBusService.createSubscription.calledOnce.should.be.true;
+        serviceBusService.createSubscription.firstCall.args[0].should.equal(topicName);
+        serviceBusService.createSubscription.firstCall.args[1].should.equal(subscriptionName);
+        done();
+      });
+    });
+
+    describe('and subscription already exists', function () {
+      var errDetails = {
+        code: '409',
+        detail: 'Entity \'namespace:topic|subscription\' already exists.'
+      };
+
+
+      beforeEach(function () {
+        serviceBusService.createSubscription = function (topic, sub, options, callback) {
+          process.nextTick(function () {
+            var errSubscriptionAlreadyExists = new Error(util.format('Error: %s - %s', errDetails.code, errDetails.detail));
+            errSubscriptionAlreadyExists.code = errDetails.code;
+            errSubscriptionAlreadyExists.detail = errDetails.detail;
+
+            var responseSubscriptionAlreadyExists = {
+              isSuccessful: false,
+              statusCode: 409
+            };
+            callback(errSubscriptionAlreadyExists, null, responseSubscriptionAlreadyExists);
+          });
+        }
+      });
+
+      it('should start up if subscription already exists', function (done) {
+        connector.start(function (err) {
+          should.not.exist(err);
+          done();
+        });
+      });
+    });
+
+    describe('and there is an error on subscription creation', function () {
+      var errDetails = {
+        code: '500',
+        detail: 'Internal Server Error'
+      };
+
+      beforeEach(function () {
+        serviceBusService.createSubscription = function (topic, sub, options, callback) {
+          process.nextTick(function () {
+            var err = new Error(util.format('Error: %s - %s', errDetails.code, errDetails.detail));
+            err.code = errDetails.code;
+            err.detail = errDetails.detail;
+
+            var errorResponse = {
+              isSuccessful: false,
+              statusCode: 500
+            };
+            callback(err, null, errorResponse);
+          });
+        }
+      });
+
+      it('should pass error to start callback', function (done) {
+        connector.start(function (err) {
+          should.exist(err);
+          err.code.should.equal(errDetails.code);
+          err.detail.should.equal(errDetails.detail);
+          done();
+        });
+      });
     });
   });
 
@@ -121,18 +196,19 @@ describe('Service Bus connection layer', function () {
     var connector;
     var receive;
 
-    beforeEach(function () {
+    beforeEach(function (done) {
       sb = {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
         }),
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: sinon.spy()
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
         connector = newConnector;
-        connector.start();
+        connector.start(done);
       });
     });
 
@@ -231,7 +307,7 @@ describe('Service Bus connection layer', function () {
     var connector;
     var receive;
     var numReceives = 8;
-    beforeEach(function () {
+    beforeEach(function (done) {
       receive = [];
 
       sb = {
@@ -239,6 +315,7 @@ describe('Service Bus connection layer', function () {
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive.push(callback);
         }),
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: sinon.spy()
       };
 
@@ -250,7 +327,7 @@ describe('Service Bus connection layer', function () {
         numReceives: numReceives
       });
 
-      connector.start();
+      connector.start(done);
     });
 
     it('should raise message event when message is received', function (done) {
@@ -300,18 +377,19 @@ describe('Service Bus connection layer', function () {
     var connector;
     var receive;
 
-    beforeEach(function () {
+    beforeEach(function (done) {
       sb = {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
         }),
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: sinon.spy()
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
         connector = newConnector;
-        connector.start();
+        connector.start(done);
       });
     });
 
@@ -327,9 +405,10 @@ describe('Service Bus connection layer', function () {
     it('should start polling again if started after being stopped', function (done) {
       connector.stop(function () {
         sb.receiveSubscriptionMessage.calledOnce.should.be.true;
-        connector.start();
-        sb.receiveSubscriptionMessage.calledTwice.should.be.true;
-        done();
+        connector.start(function () {
+          sb.receiveSubscriptionMessage.calledTwice.should.be.true;
+          done();
+        });
       });
 
       receive(null, packMessage(connector, 'sourceNode', 'message', 'pending'));
@@ -341,12 +420,24 @@ function makeConnectorWithMockSB(callback) {
   var sb = {
     receiveSubscriptionMessage: sinon.spy(),
     sendTopicMessage: sinon.spy(),
+    createSubscription: sinon.stub().callsArgAsync(3),
     withFilter: function (filter) { return this; }
   };
   makeConnector(sb, callback);
 }
 
-function makeConnector(serviceBus, callback) {
+function makeConnectorWithOptions(serviceBus, options, callback) {
+  options.nodeId = options.nodeId || nodeId;
+  options.topicName = options.topicName || topicName;
+  options.serviceBusService = serviceBus;
+  options.numReceives = 1;
+
+  var connector = new ServiceBusConnector(options);
+  callback(serviceBus, connector);
+
+}
+
+function makeConnectorNoOptions(serviceBus, callback) {
   var connector = new ServiceBusConnector({
     nodeId: nodeId,
     topic: topicName,
@@ -356,6 +447,16 @@ function makeConnector(serviceBus, callback) {
   });
 
   callback(serviceBus, connector);
+}
+
+function makeConnector() {
+  if (arguments.length === 2) {
+    makeConnectorNoOptions.apply(null, arguments);
+  } else if (arguments.length === 3) {
+    makeConnectorWithOptions.apply(null, arguments);
+  } else {
+    throw new Error('Unknown makeConnector overload with ' + arguments.length + ' arguments');
+  }
 }
 
 function packMessage(connector, sourceNode, message, args, sequenceNumber) {
