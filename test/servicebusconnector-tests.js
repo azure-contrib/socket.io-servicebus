@@ -78,7 +78,40 @@ describe('Service Bus connection layer', function () {
       });
 
       it('should start up if subscription already exists', function (done) {
-        connector.start(function () {
+        connector.start(function (err) {
+          should.not.exist(err);
+          done();
+        });
+      });
+    });
+
+    describe('and there is an error on subscription creation', function () {
+      var errDetails = {
+        code: '500',
+        detail: 'Internal Server Error'
+      };
+
+      beforeEach(function () {
+        serviceBusService.createSubscription = function (topic, sub, options, callback) {
+          process.nextTick(function () {
+            var err = new Error(util.format('Error: %s - %s', errDetails.code, errDetails.detail));
+            err.code = errDetails.code;
+            err.detail = errDetails.detail;
+
+            var errorResponse = {
+              isSuccessful: false,
+              statusCode: 500
+            };
+            callback(err, null, errorResponse);
+          });
+        }
+      });
+
+      it('should pass error to start callback', function (done) {
+        connector.start(function (err) {
+          should.exist(err);
+          err.code.should.equal(errDetails.code);
+          err.detail.should.equal(errDetails.detail);
           done();
         });
       });

@@ -40,24 +40,13 @@ describe('Service Bus Store objects', function() {
 
   describe('when creating', function () {
     var store;
-    var listener = { 
-      store: sinon.spy(),
-      sb: sinon.spy()
-    };
 
     before(function () {
-      store = new SbStore({ listeners: [listener]});
+      store = new SbStore();
     });
 
     it('should start the service bus polling', function () {
       store.sb.start.called.should.be.true;
-    });
-
-    it('should hook up listeners', function () {
-      listener.store.calledOnce.should.be.true;
-      listener.store.getCall(0).calledWithExactly(store).should.be.true;
-      listener.sb.calledOnce.should.be.true;
-      listener.sb.getCall(0).calledWithExactly(store.sb).should.be.true;
     });
   });
 
