@@ -33,7 +33,7 @@ describe('Message sequencing layer', function () {
     beforeEach(function () {
       innerInterface = {
         on: sinon.spy(),
-        start: sinon.spy()
+        start: sinon.stub().callsArgAsync(0)
       };
       sequencer = new MessageSequencer(createOptions, innerInterface);      
     });
@@ -48,12 +48,14 @@ describe('Message sequencing layer', function () {
       innerInterface.start.calledOnce.should.be.true;
     });
 
-    it('should only start once if start called multiple times', function () {
-      sequencer.start();
-      sequencer.start();
-      innerInterface.start.calledOnce.should.be.true;
+    it('should only start once if start called multiple times', function (done) {
+      sequencer.start(function () {
+        sequencer.start(function () {
+          innerInterface.start.calledOnce.should.be.true;
+          done();
+        });
+      });
     });
-
   });
 
   describe('when sending', function () {
@@ -356,19 +358,19 @@ describe('Message sequencing layer', function () {
     beforeEach(function () {
       innerInterface = {
         on: noop,
-        start: sinon.spy(),
+        start: sinon.stub().callsArgAsync(0),
         stop: sinon.spy(),
       };
 
       sequencer = new MessageSequencer(createOptions, innerInterface);
     });
 
-    it('should stop inner', function () {
-      sequencer.start();
-
-      sequencer.stop();
-
-      innerInterface.stop.calledOnce.should.be.true;
+    it('should stop inner', function (done) {
+      sequencer.start(function () {
+        sequencer.stop();
+        innerInterface.stop.calledOnce.should.be.true;
+        done();
+      });
     });
 
     it('should restart after stopping', function () {
@@ -384,20 +386,24 @@ describe('Message sequencing layer', function () {
       innerInterface.stop.calledOnce.should.be.false;
     });
 
-    it('should not stop inner again if stopped again', function () {
-      sequencer.start();
-      sequencer.stop();
-      sequencer.stop();
+    it('should not stop inner again if stopped again', function (done) {
+      sequencer.start(function () {
+        sequencer.stop();
+        sequencer.stop();
 
-      innerInterface.stop.calledOnce.should.be.true;
+        innerInterface.stop.calledOnce.should.be.true;
+        done();
+      });
     });
 
-    it('should pass callback to inner to invoke', function () {
-      sequencer.start();
-      function stopCallback() { }
-      sequencer.stop(stopCallback);
+    it('should pass callback to inner to invoke', function (done) {
+      sequencer.start(function () {
+        function stopCallback() { }
+        sequencer.stop(stopCallback);
 
-      innerInterface.stop.firstCall.args[0].should.equal(stopCallback);
+        innerInterface.stop.firstCall.args[0].should.equal(stopCallback);
+        done();
+      });
     });
   });
 });
