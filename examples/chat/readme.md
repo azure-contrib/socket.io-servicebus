@@ -14,8 +14,6 @@ first.
 1. Create (or locate) a Service Bus namespace to use. Get the connection string for this namespace
    either from the Windows Azure portal or by using the azure command line tools.
 
-2. Create a topic in the Service Bus namespace. Default settings for the topic will work fine.
-
 ## Running the application
 
 Before you run, you'll need to run `npm install` in the chat example's directory to set up dependencies.
@@ -28,8 +26,9 @@ Once you have Service Bus set up, run the application. The command line looks li
   node app.js <topic> <port> <connectionString>
 ```
 
-`<topic>` is the topic name, `<subscription>` is the subscription name for this instance,
-`<port>` is the port number to run on, and `<connectionString>` is the service bus connection string.
+`<topic>` is the topic name, `<port>` is the port number to run on, and `<connectionString>` is the service bus connection string.
+
+If `<topic>` does not exist in the Service Bus namespace, it will be automatically created at startup.
 
 ### Environment variables
 
