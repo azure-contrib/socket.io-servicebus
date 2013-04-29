@@ -30,12 +30,12 @@ describe('Service Bus connection layer', function () {
     var connector;
     var serviceBusService;
 
-    beforeEach(function () {
+    beforeEach(function (done) {
       makeConnectorWithMockSB(function (sb, c) {
         serviceBusService = sb;
         connector = c;
       });
-      connector.start();
+      connector.start(done);
     });
 
     it('should start polling service bus', function () {
@@ -47,22 +47,24 @@ describe('Service Bus connection layer', function () {
     var connector;
     var serviceBusService;
 
-    beforeEach(function () {
+    beforeEach(function (done) {
       serviceBusService = {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(),
-        createSubscription: sinon.spy(),
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: function () { return this; }
       };
 
       makeConnector(serviceBusService, function (_, c) {
         connector = c;
       });
-      connector.start();
+      connector.start(done);
     });
 
     it('should attempt to create a subscription', function () {
       serviceBusService.createSubscription.calledOnce.should.be.true;
+      serviceBusService.createSubscription.firstCall.args[0].should.equal(topicName);
+      serviceBusService.createSubscription.firstCall.args[1].should.equal(subscriptionName);
     });
   });
 
