@@ -38,7 +38,6 @@ var io = sio.listen(server);
 io.configure(function () {
   io.set('store', new SbStore({
     topic: topicName,
-    subscription: subscriptionName,
     connectionString: connectionString
   }));
 });
