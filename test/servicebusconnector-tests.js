@@ -163,19 +163,19 @@ describe('Service Bus connection layer', function () {
     var connector;
     var receive;
 
-    beforeEach(function () {
+    beforeEach(function (done) {
       sb = {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
         }),
-        createSubscription: function (topic, sub, opts, cb) { cb(); },
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: sinon.spy()
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
         connector = newConnector;
-        connector.start();
+        connector.start(done);
       });
     });
 
@@ -274,7 +274,7 @@ describe('Service Bus connection layer', function () {
     var connector;
     var receive;
     var numReceives = 8;
-    beforeEach(function () {
+    beforeEach(function (done) {
       receive = [];
 
       sb = {
@@ -282,7 +282,7 @@ describe('Service Bus connection layer', function () {
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive.push(callback);
         }),
-        createSubscription: function (topic, sub, opts, cb) { cb(); },
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: sinon.spy()
       };
 
@@ -294,7 +294,7 @@ describe('Service Bus connection layer', function () {
         numReceives: numReceives
       });
 
-      connector.start();
+      connector.start(done);
     });
 
     it('should raise message event when message is received', function (done) {
@@ -344,19 +344,19 @@ describe('Service Bus connection layer', function () {
     var connector;
     var receive;
 
-    beforeEach(function () {
+    beforeEach(function (done) {
       sb = {
         sendTopicMessage: sinon.spy(),
         receiveSubscriptionMessage: sinon.spy(function (topic, subscription, callback) {
           receive = callback;
         }),
-        createSubscription: function (topic, sub, opts, cb) { cb(); },
+        createSubscription: sinon.stub().callsArgAsync(3),
         withFilter: sinon.spy()
       };
 
       makeConnector(sb, function (serviceBus, newConnector) {
         connector = newConnector;
-        connector.start();
+        connector.start(done);
       });
     });
 
@@ -372,9 +372,10 @@ describe('Service Bus connection layer', function () {
     it('should start polling again if started after being stopped', function (done) {
       connector.stop(function () {
         sb.receiveSubscriptionMessage.calledOnce.should.be.true;
-        connector.start();
-        sb.receiveSubscriptionMessage.calledTwice.should.be.true;
-        done();
+        connector.start(function () {
+          sb.receiveSubscriptionMessage.calledTwice.should.be.true;
+          done();
+        });
       });
 
       receive(null, packMessage(connector, 'sourceNode', 'message', 'pending'));
