@@ -27,7 +27,7 @@ describe('Service Bus Store objects', function() {
     sandbox = sinon.sandbox.create();
     sandbox.stub(SbStore.prototype, 'createServiceBusConnector', function (options) {
       return {
-        start: sandbox.stub(),
+        start: sandbox.stub().callsArgAsync(0),
         send: sandbox.stub(),
         on: sandbox.stub()
       }
@@ -40,13 +40,21 @@ describe('Service Bus Store objects', function() {
 
   describe('when creating', function () {
     var store;
-
-    before(function () {
+    var startCallback = sinon.spy();
+    before(function (done) {
       store = new SbStore();
+      store.on('started', function (err) {
+        startCallback(err);
+        done();
+      });
     });
 
     it('should start the service bus polling', function () {
       store.sb.start.called.should.be.true;
+    });
+
+    it('should invoke the start callback', function () {
+      startCallback.calledOnce.should.be.true;
     });
   });
 
