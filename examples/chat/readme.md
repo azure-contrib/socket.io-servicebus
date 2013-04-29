@@ -16,9 +16,6 @@ first.
 
 2. Create a topic in the Service Bus namespace. Default settings for the topic will work fine.
 
-3. Create subscriptions in the Service Bus topic; each instance of the chat app will need it's own,
-   distinct subscription. Default settings for the topic will work fine.
-
 ## Running the application
 
 Before you run, you'll need to run `npm install` in the chat example's directory to set up dependencies.
@@ -28,7 +25,7 @@ Before you run, you'll need to run `npm install` in the chat example's directory
 Once you have Service Bus set up, run the application. The command line looks like:
 
 ```
-  node app.js <topic> <subscription> <port> <connectionString>
+  node app.js <topic> <port> <connectionString>
 ```
 
 `<topic>` is the topic name, `<subscription>` is the subscription name for this instance,
@@ -60,10 +57,6 @@ to Windows Azure):
             <td>Topic name</td>
         </tr>
         <tr>
-            <td>SB_CHAT_SUBSCRIPTION</td>
-            <td>Subscription name</td>
-        </tr>
-        <tr>
             <td>TEST_SB_CHAT</td>
             <td>For local tests; uses socket.io-servicebus module from source tree rather than npm</td>
         </tr>
@@ -75,8 +68,6 @@ module itself, turning this environment variable on (set it to any value, it jus
 require the module from the source tree directly, rather than using the one npm installed locally.
 
 # Known Issues
-
-* The setup for service bus should not require setting up subscriptions manually; this is planned for a future version.
 
 * The "presence" messages (list of who has joined the chat) is not currently working correctly across multiple nodes. This
   is a known issue with the chat app itself; you see similar issues when using the redis store.
