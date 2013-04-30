@@ -8,6 +8,7 @@ var express = require('express')
   , nib = require('nib')
   , sio = require('socket.io')
   , chat = require('./chat')
+  , presence = require('./presence')
   , SbStore;
 
 if (process.env.TEST_SB_CHAT) {
@@ -85,3 +86,4 @@ io.configure(function () {
 });
 
 chat.initialize(io, port);
+presence.initialize(io, port);
