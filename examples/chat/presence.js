@@ -15,12 +15,56 @@
 
 'use strict';
 
+var cio = require('socket.io-client');
 var uuid = require('node-uuid');
+var Nicknames = require('nicknames');
 
-var nicknames = {};
 var localSocketsRoomName = 'local' + uuid.v4();
+var nicknames = new Nicknames(localSocketsRoomName);
+
+var log;
+var presence;
 
 exports.initialize = function (io, port) {
+  log = io.get('logger');
+
+  initPresenceServer(io, port);
+  initPresenceClient(io, port);
+  initClientHandling(io, port);
+});
+
+function initPresenceServer(io, port) {
+  var server = io.of('/presence');
+  server.on('connection', function (socket) {
+    socket.broadcast.emit('send nicknames');
+
+    socket.on('nicknames', function (sourceNode, nicks) {
+      socket.broadcast.emit('nicknames', sourceNode, nicks);
+    });
+  });
+}
+
+function initPresenceClient(io, port) {
+  presence = cio.connect('http://localhost:' + port + '/presence');
+  presence.on('connect', function () {
+    log.info('Connected to presence client');
+  });
+
+  presence.on('send nicknames', function () {
+    presence.emit('nicknames', localSocketsRoomName, nicknames.getLocalNames());
+  });
+
+  presence.on('nicknames', function (sourceNode, nicks) {
+    nicknames.setRemoteNames(sourceNode, nicks);
+    sendNicknamesToChatClients();
+  });
+}
+
+function updatePresence() {
+  presence.emit('nicknames', localSocketsRoomName, nicknames[localSocketsRoomName]);
+}
+
+function initClientHandling(io, port) {
   io.sockets.on('connection', function (socket) {
     socket.join(localSocketsRoomName);
 
@@ -31,16 +75,42 @@ exports.initialize = function (io, port) {
         fn(false);
         nicknames[nick] = socket.nickname = nick;
         socket.broadcast.emit('announcement', nick + ' connected');
-        io.sockets.emit('nicknames', nicknames);
+        servers.emit('nicknames', myNicknames());
       }
     });
 
     socket.on('disconnect', function () {
       if (!socket.nickname) return;
-
-      delete nicknames[socket.nickname];
+      var key = localSocketsRoomName + ':' + socket.nickname;
+      delete nicknames[key];
       socket.broadcast.emit('announcement', socket.nickname + ' disconnected');
-      socket.broadcast.emit('nicknames', nicknames);
+      servers.emit('nicknames', nicknames);
+    }); 
+
+  }
+}
+
+  io.sockets.on('connection', function (socket) {
+    socket.join(localSocketsRoomName);
+
+    socket.on('nickname', function (nick, fn) {
+      var key = localSocketsRoomName + ':' + nick;
+      if (nicknames[key]) {
+        fn(true);
+      } else {
+        fn(false);
+        nicknames[key] = socket.nickname = nick;
+        socket.broadcast.emit('announcement', nick + ' connected');
+        servers.emit('nicknames', myNicknames());
+      }
+    });
+
+    socket.on('disconnect', function () {
+      if (!socket.nickname) return;
+      var key = localSocketsRoomName + ':' + socket.nickname;
+      delete nicknames[key];
+      socket.broadcast.emit('announcement', socket.nickname + ' disconnected');
+      servers.emit('nicknames', nicknames);
     }); 
   });
 
@@ -48,4 +118,9 @@ exports.initialize = function (io, port) {
     console.log('sending announcement');
     io.sockets.in(localSocketsRoomName).emit('announcement', 'local announcement for port ' + port);
   }, 10000);
+
+  io.of('/servers')
+    .on('connection', function (socket) {
+
+    });
 }
