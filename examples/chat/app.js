@@ -84,6 +84,4 @@ io.configure(function () {
   io.set('transports', ['xhr-polling']);
 });
 
-io.sockets.on('connection', function (socket) {
-  chat.socketConnected(io, socket);
-});
+chat.initialize(io, port);
