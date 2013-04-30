@@ -37,6 +37,7 @@ describe('logging', function () {
       },
       sendTopicMessage: sinon.spy(),
       createSubscription: function (topic, subscriptions, options, cb) { cb(); },
+      createTopic: sinon.stub().callsArg(2),
       withFilter: function (filter) { return this; },
       host: 'testnamespace.servicebus.example'
     };
