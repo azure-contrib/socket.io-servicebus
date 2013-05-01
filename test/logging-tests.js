@@ -36,6 +36,8 @@ describe('logging', function () {
         recvFuncs.push(callback);
       },
       sendTopicMessage: sinon.spy(),
+      createSubscription: function (topic, subscriptions, options, cb) { cb(); },
+      createTopic: sinon.stub().callsArg(2),
       withFilter: function (filter) { return this; },
       host: 'testnamespace.servicebus.example'
     };
@@ -65,8 +67,7 @@ describe('logging', function () {
   it('should log subscription info on creation', function () {
     logger.info.calledWith('Service Bus Store created', 
       'host:' + serviceBusService.host,
-      'topic:testtopic', 
-      'sub:testsubscription').should.be.true;
+      'topic:testtopic').should.be.true;
   });
 
   it('should log when poll request starts up', function () {
@@ -164,5 +165,4 @@ describe('logging', function () {
     var recvFunc = recvFuncs.shift();
     recvFunc(null, message);
   }
-
 });
