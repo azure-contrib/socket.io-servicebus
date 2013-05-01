@@ -7,7 +7,17 @@ channel for socket.io applications.
 
 * Service Bus Store
     * Easily connect multiple socket.io server instances over Service Bus
-    * 
+ 
+# What's new in this release
+
+Service Bus topics and subscriptions are now created automatically if they don't already exist. Subscriptions
+are created with a five minute idle expiration time, so they won't stick around once the server is no longer 
+polling them.
+
+The cross-server presence indicators in the chat sample has been updated to properly handle the multi-server
+environment.
+
+There's the start of a perf test harness in examples/timingtest.
 
 # Getting Started
 ## Download Source Code
@@ -25,12 +35,14 @@ You can install the azure npm package directly.
 
 # Usage
 
-First, set up your Service Bus namespace. Create a topic to use for communications, and one subscription per socket.io server instance.
+First, set up your Service Bus namespace. You will need a shared
+topic name; this can either be created in advance or the module will create them for you.
+
 These can be created either via the Windows Azure portal or programmatically using the Windows Azure SDK for Node.
 
 Then, configure socket.io to use the Service Bus Store:
 
-```Javascript
+```javascript
 var sio = require('socket.io');
 var SbStore = require('socket.io-servicebus');
 
@@ -38,7 +50,6 @@ var io = sio.listen(server);
 io.configure(function () {
   io.set('store', new SbStore({
     topic: topicName,
-    subscription: subscriptionName,
     connectionString: connectionString
   }));
 });
@@ -48,7 +59,7 @@ The connection string can either be retrieved from the portal, or using our powe
 
 ## Current Issues
 
-The current version (0.0.1) only routes messages; client connection state is stored in memory in the server instance. Clients need to consistently connect to the same server instance to avoid losing their session state.
+The current version (0.0.2) only routes messages; client connection state is stored in memory in the server instance. Clients need to consistently connect to the same server instance to avoid losing their session state.
 
 # Need Help?
 
