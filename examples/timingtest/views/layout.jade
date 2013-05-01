@@ -3,13 +3,13 @@ html
   head
     title= title
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
-    link(rel='stylesheet', href='/bootstrap/css/bootstrap.css', media='screen')
+    link(rel='stylesheet', href='//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css', media='screen')
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
 
     block content
     script(src='//code.jquery.com/jquery.js')
-    script(src='/bootstrap/js/bootstrap.js')
+    script(src='//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js')
     script(src='/socket.io/socket.io.js')
     script(src='//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js')
     script $('.nav li a[href="' + location.pathname + '"]').parent().addClass('active')
