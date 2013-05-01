@@ -64,7 +64,8 @@ function initPresenceClient(io, port) {
   });
 }
 
-function updatePresence() {
+function updatePresence(io) {
+  io.sockets.in(localSocketsRoomName).emit('nicknames', nicknames.getAllNames());
   presence.emit('nicknames', localSocketsRoomName, nicknames.getLocalNames());
 }
 
@@ -80,8 +81,7 @@ function initClientHandling(io, port) {
         nicknames.addLocalName(nick);
         socket.nickname = nick;
         socket.broadcast.emit('announcement', nick + ' connected');
-        io.sockets.in(localSocketsRoomName).emit('nicknames', nicknames.getAllNames());
-        updatePresence();
+        updatePresence(io);
       }
     });
 
@@ -90,8 +90,7 @@ function initClientHandling(io, port) {
       log && log.info('client disconnected', 'nick:' + socket.nickname);
       nicknames.delLocalName(socket.nickname);
       socket.broadcast.emit('announcement', socket.nickname + ' disconnected');
-      io.sockets.in(localSocketsRoomName).emit('nicknames', nicknames.getAllNames());
-      updatePresence(socket);
+      updatePresence(io);
     }); 
   });
 }
