@@ -17,7 +17,8 @@
 
 var cio = require('socket.io-client');
 var uuid = require('node-uuid');
-var Nicknames = require('nicknames');
+var util = require('util');
+var Nicknames = require('./nicknames');
 
 var localSocketsRoomName = 'local' + uuid.v4();
 var nicknames = new Nicknames(localSocketsRoomName);
@@ -31,14 +32,15 @@ exports.initialize = function (io, port) {
   initPresenceServer(io, port);
   initPresenceClient(io, port);
   initClientHandling(io, port);
-});
+};
 
 function initPresenceServer(io, port) {
   var server = io.of('/presence');
   server.on('connection', function (socket) {
-    socket.broadcast.emit('send nicknames');
+    socket.broadcast.emit('send-nicknames');
 
     socket.on('nicknames', function (sourceNode, nicks) {
+      log && log.info('nicknames received, broadcasting');
       socket.broadcast.emit('nicknames', sourceNode, nicks);
     });
   });
@@ -47,21 +49,23 @@ function initPresenceServer(io, port) {
 function initPresenceClient(io, port) {
   presence = cio.connect('http://localhost:' + port + '/presence');
   presence.on('connect', function () {
-    log.info('Connected to presence client');
+    log && log.info('Connected to presence client');
   });
 
-  presence.on('send nicknames', function () {
+  presence.on('send-nicknames', function () {
+    log && log.info('sending local nicknames', 'nicks:' + nicknames.getLocalNames());
     presence.emit('nicknames', localSocketsRoomName, nicknames.getLocalNames());
   });
 
   presence.on('nicknames', function (sourceNode, nicks) {
+    log && log.info('received nicknames', 'node:' + sourceNode, 'nicks:' + util.inspect(nicks));
     nicknames.setRemoteNames(sourceNode, nicks);
-    sendNicknamesToChatClients();
+    io.sockets.in(localSocketsRoomName).emit('nicknames', nicknames.getAllNames());
   });
 }
 
 function updatePresence() {
-  presence.emit('nicknames', localSocketsRoomName, nicknames[localSocketsRoomName]);
+  presence.emit('nicknames', localSocketsRoomName, nicknames.getLocalNames());
 }
 
 function initClientHandling(io, port) {
@@ -69,58 +73,25 @@ function initClientHandling(io, port) {
     socket.join(localSocketsRoomName);
 
     socket.on('nickname', function (nick, fn) {
-      if (nicknames[nick]) {
+      if (nicknames.hasLocalName(nick)) {
         fn(true);
       } else {
         fn(false);
-        nicknames[nick] = socket.nickname = nick;
+        nicknames.addLocalName(nick);
+        socket.nickname = nick;
         socket.broadcast.emit('announcement', nick + ' connected');
-        servers.emit('nicknames', myNicknames());
+        io.sockets.in(localSocketsRoomName).emit('nicknames', nicknames.getAllNames());
+        updatePresence();
       }
     });
 
     socket.on('disconnect', function () {
       if (!socket.nickname) return;
-      var key = localSocketsRoomName + ':' + socket.nickname;
-      delete nicknames[key];
+      log && log.info('client disconnected', 'nick:' + socket.nickname);
+      nicknames.delLocalName(socket.nickname);
       socket.broadcast.emit('announcement', socket.nickname + ' disconnected');
-      servers.emit('nicknames', nicknames);
-    }); 
-
-  }
-}
-
-  io.sockets.on('connection', function (socket) {
-    socket.join(localSocketsRoomName);
-
-    socket.on('nickname', function (nick, fn) {
-      var key = localSocketsRoomName + ':' + nick;
-      if (nicknames[key]) {
-        fn(true);
-      } else {
-        fn(false);
-        nicknames[key] = socket.nickname = nick;
-        socket.broadcast.emit('announcement', nick + ' connected');
-        servers.emit('nicknames', myNicknames());
-      }
-    });
-
-    socket.on('disconnect', function () {
-      if (!socket.nickname) return;
-      var key = localSocketsRoomName + ':' + socket.nickname;
-      delete nicknames[key];
-      socket.broadcast.emit('announcement', socket.nickname + ' disconnected');
-      servers.emit('nicknames', nicknames);
+      io.sockets.in(localSocketsRoomName).emit('nicknames', nicknames.getAllNames());
+      updatePresence(socket);
     }); 
   });
-
-  setInterval(function () {
-    console.log('sending announcement');
-    io.sockets.in(localSocketsRoomName).emit('announcement', 'local announcement for port ' + port);
-  }, 10000);
-
-  io.of('/servers')
-    .on('connection', function (socket) {
-
-    });
 }

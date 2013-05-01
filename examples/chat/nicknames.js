@@ -27,22 +27,46 @@ Nicknames.prototype._getLocalNames = function() {
   return this.nicknames[this.localKey];
 }
 
-Nicknames.prototype.hasLocalName(name) {
+Nicknames.prototype.hasLocalName = function (name) {
   return this._getLocalNames()[name];
 }
 
-Nicknames.prototype.addLocalName(name) {
+Nicknames.prototype.addLocalName = function (name) {
   this._getLocalNames()[name] = name;
 }
 
-Nicknames.prototype.setRemoteNames(nodeId, names) {
-  var names = {};
-  names.forEach(function (n) { names[n] = n; });
-  this.nicknames[nodeId] = names;
+Nicknames.prototype.delLocalName = function (name) {
+  delete this._getLocalNames()[name];
 }
 
-Nicknames.prototype.getLocalNames() {
+Nicknames.prototype.setRemoteNames = function (nodeId, names) {
+  var remoteNames = {};
+  names.forEach(function (n) { remoteNames[n] = n; });
+  this.nicknames[nodeId] = remoteNames;
+}
+
+Nicknames.prototype.getRemoteNames = function (nodeId) {
+  var remoteNames = this.nicknames[nodeId] || {};
+  return Object.keys(remoteNames);
+}
+
+Nicknames.prototype.getLocalNames = function () {
   return Object.keys(this._getLocalNames());
+}
+
+Nicknames.prototype.getServers = function () {
+  return Object.keys(this.nicknames);
+}
+
+Nicknames.prototype.getAllNames = function () {
+  var names = [];
+  var self = this;
+  Object.keys(this.nicknames).forEach(function (server) {
+    Object.keys(self.nicknames[server]).forEach(function (key) {
+      names.push(key);
+    });
+  });
+  return names;
 }
 
 module.exports = Nicknames;
