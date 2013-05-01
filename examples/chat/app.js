@@ -7,6 +7,8 @@ var express = require('express')
   , stylus = require('stylus')
   , nib = require('nib')
   , sio = require('socket.io')
+  , chat = require('./chat')
+  , presence = require('./presence')
   , SbStore;
 
 if (process.env.TEST_SB_CHAT) {
@@ -83,27 +85,5 @@ io.configure(function () {
   io.set('transports', ['xhr-polling']);
 });
 
-io.sockets.on('connection', function (socket) {
-  socket.on('user message', function (msg) {
-    socket.broadcast.emit('user message', socket.nickname, msg);
-  });
-
-  socket.on('nickname', function (nick, fn) {
-    if (nicknames[nick]) {
-      fn(true);
-    } else {
-      fn(false);
-      nicknames[nick] = socket.nickname = nick;
-      socket.broadcast.emit('announcement', nick + ' connected');
-      io.sockets.emit('nicknames', nicknames);
-    }
-  });
-
-  socket.on('disconnect', function () {
-    if (!socket.nickname) return;
-
-    delete nicknames[socket.nickname];
-    socket.broadcast.emit('announcement', socket.nickname + ' disconnected');
-    socket.broadcast.emit('nicknames', nicknames);
-  });
-});
+chat.initialize(io, port);
+presence.initialize(io, port);
