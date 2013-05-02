@@ -47,8 +47,17 @@ function initPresenceServer(io, port) {
 }
 
 function initPresenceClient(io, port) {
-  presence = cio.connect('http://localhost:' + port + '/presence');
-  presence.on('connect', function () {
+  var presenceUrl = process.env.PRESENCE_URL;
+  
+  if (!presenceUrl) {
+    presenceUrl = 'http://localhost:' + port;
+  }
+
+  presenceUrl += '/presence';
+  
+  log && log.info('Connecting to presence client', 'url:' + presenceUrl);
+
+  presence = cio.connect(presenceUrl);  presence.on('connect', function () {
     log && log.info('Connected to presence client');
   });
 
