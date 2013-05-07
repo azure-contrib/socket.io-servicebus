@@ -1,5 +1,7 @@
 # socket.io-servicebus - socket.io store using Windows Azure Service Bus
 
+[![Build Status](https://travis-ci.org/WindowsAzure/socket.io-servicebus.png)](https://travis-ci.org/WindowsAzure/socket.io-servicebus)
+
 This project provides a Node.js package that lets you use Windows Azure Service Bus as a back-end communications
 channel for socket.io applications.
 
