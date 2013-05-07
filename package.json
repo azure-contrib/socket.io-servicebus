@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "jshint": "*",
+    "jshint": "~1.1.0",
     "sinon": "~1.5.2",
     "should": "*"
   },
@@ -48,6 +48,8 @@
     "url": "http://github.com/WindowsAzure/socket.io-servicebus/issues"
   },
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "npm run-script jshint && npm run-script unit",
+    "unit": "mocha -R spec",
+    "jshint": "jshint lib --jslint-reporter"
   }
 }
