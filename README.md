@@ -9,11 +9,16 @@ channel for socket.io applications.
 
 * Service Bus Store
     * Easily connect multiple socket.io server instances over Service Bus
- 
+
 # What's new in this release
 
+## 0.0.3
+Fixes to the presence system in the chat application. Not 100% there, but working much better
+in the multi-server case.
+
+## 0.0.2
 Service Bus topics and subscriptions are now created automatically if they don't already exist. Subscriptions
-are created with a five minute idle expiration time, so they won't stick around once the server is no longer 
+are created with a five minute idle expiration time, so they won't stick around once the server is no longer
 polling them.
 
 The cross-server presence indicators in the chat sample has been updated to properly handle the multi-server
