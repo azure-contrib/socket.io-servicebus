@@ -7,7 +7,7 @@
     "Tavares, Chris <ctavares@microsoft.com>",
     "Totten, Nathan <ntotten@microsoft.com>"
   ],
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Socket.io store that connects to Windows Azure Service Bus",
   "tags": [
     "azure",
