@@ -5,6 +5,8 @@
 This project provides a Node.js package that lets you use Windows Azure Service Bus as a back-end communications
 channel for socket.io applications.
 
+Learn more about the module by watching the recent [Subscribe] (http://channel9.msdn.com/Blogs/Subscribe/Glenn-Block-Explains-SocketIO-Scale-Out-on-Service-Bus) episode.
+
 # Library Features
 
 * Service Bus Store
