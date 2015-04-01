@@ -18,7 +18,7 @@
     "azure",
     "socket.io"
   ],
-  "main": "./lib/sbstore.js",
+  "main": "./lib/sbadapter.js",
   "engines": {
     "node": ">= 0.6.15"
   },
@@ -30,8 +30,9 @@
   ],
   "dependencies": {
     "azure": ">= 0.6.9",
-    "socket.io": ">= 0.9.13",
-    "node-uuid": "~1.4.0"
+    "socket.io": ">= 1.0.3",
+    "node-uuid": "~1.4.0",
+    "socket.io-adapter": "^0.3.1"
   },
   "devDependencies": {
     "mocha": "*",

@@ -1,4 +1,4 @@
-# socket.io-servicebus - socket.io store using Windows Azure Service Bus
+# socket.io-servicebus - socket.io adapter using Windows Azure Service Bus
 
 [![Build Status](https://travis-ci.org/WindowsAzure/socket.io-servicebus.png?branch=dev)](https://travis-ci.org/WindowsAzure/socket.io-servicebus)
 
@@ -9,10 +9,13 @@ Learn more about the module by watching the recent [Subscribe] (http://channel9.
 
 # Library Features
 
-* Service Bus Store
+* Service Bus Adapter
     * Easily connect multiple socket.io server instances over Service Bus
 
 # What's new in this release
+
+## 1.0.0
+Changes the Store and Client Interfaces to an Adapter interface to work with socket.io releases after 1.0
 
 ## 0.0.3
 Fixes to the presence system in the chat application. Not 100% there, but working much better
@@ -49,19 +52,17 @@ topic name; this can either be created in advance or the module will create them
 
 These can be created either via the Windows Azure portal or programmatically using the Windows Azure SDK for Node.
 
-Then, configure socket.io to use the Service Bus Store:
+Then, configure socket.io to use the Service Bus Adapter:
 
 ```javascript
 var sio = require('socket.io');
-var SbStore = require('socket.io-servicebus');
+var sbAdapter = require('socket.io-servicebus');
 
 var io = sio.listen(server);
-io.configure(function () {
-  io.set('store', new SbStore({
-    topic: topicName,
-    connectionString: connectionString
-  }));
-});
+io.adapter(sbAdapter({
+  topic: topicName,
+  connectionString: connectionString
+}));
 ```
 
 The connection string can either be retrieved from the portal, or using our powershell / x-plat CLI tools. From here, communications to and from the server will get routed over Service Bus.
